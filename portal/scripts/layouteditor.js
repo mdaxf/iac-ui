@@ -691,7 +691,8 @@ var LayoutEditor = {
           container.style.right = '0px';
           container.style.top = '45px';
           container.style.width = '300px';
-          container.style.height = '100%';
+          container.style.height = '95%';
+          container.overflowY = "auto";
           container.style.backgroundColor = 'white';
 
           attrs = {id: 'properties_content',style: 'overflow: auto; height: 100%; width: 100%; padding: 10px;'}

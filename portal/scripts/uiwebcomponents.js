@@ -23,6 +23,18 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         this.data_method = this.getAttribute("data_method");
         this.condition = this.getAttribute("condition");
 
+        if(!this.condition || this.condition == null || this.condition == undefined)
+            this.condition = "";
+
+        this.fields = this.getAttribute("fields");
+        if(!this.fields)
+            this.fields = "";
+
+        this.orderby = this.getAttribute("orderby");
+        if(!this.orderby)
+            this.orderby = "";
+        this.orderby = this.orderby.trim();
+
         if(!this.data_method)
             this.data_method = "";
         this.uitabulator = document.createElement('div');
@@ -148,7 +160,11 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         let languagecodelist = [];
         if(this.schema == null)
           return;
-        
+        let showfields = that.fields.split(",");
+        for(var i=0;i<showfields.length;i++){
+            showfields[i] = showfields[i].trim();
+        }
+
         console.log(this.schema, this.datakey_field, this.datakey_value, this.data_viewonly)
         ajax.get('/portal/datasets/schemas/'+ this.schema + '.json').then((response) => {
           let schema = JSON.parse(response);
@@ -171,6 +187,11 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           if(schema.hasOwnProperty('query'))
             querystr = schema.query;
 
+          if(that.fields !="" && showfields.length > 0){
+            const set2 = new Set(showfields);
+            listfields = listfields.filter(item => set2.has(item));
+          }
+
           let data ={}
           for(var i=0;i<listfields.length;i++){
               data[listfields[i]] = 1;
@@ -178,6 +199,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           let jdataschema =new UI.JSONSchema(schema)
           //    console.log(jdataschema)
   
+          
               
           let fieldpropertiesobj = {};
           for(var i=0;i<listfields.length;i++){
@@ -213,12 +235,28 @@ customElements.define('ui-tabulator', class extends HTMLElement {
               }
               inputs["data"] = data;
               inputs["where"] = {};
-                  
+            
+              if (that.condition != "") {
+                inputs["where"][that.condition] = "";
+                }
               url = '/sqldata/get'
+              if(this.condition){
+                let where={}
+                where[this.condition] = "";
+                inputs["where"] = where;
+              }
+
             }else{
+                if (that.condition != "") {
+                    querystr += " WHERE " + that.condition;
+                }
+                if(that.orderby != ""){
+                    querystr += " ORDER BY " + that.orderby;
+                }
                 url = "/sqldata/query"                
                 inputs["querystr"] = querystr;
                 inputs["operation"] = "query";
+                inputs["where"] = {};
             }
 
           }
@@ -229,16 +267,13 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           if(this.data_url != null)
               url = this.data_url;
   
-          if(this.condition){
-                let where={}
-                where[this.condition] = "";
-                inputs["where"] = where;
-          }
+          
+
           this.url = url;
           this.inputs = inputs;
           
           let Tabulator_Columns = [];
-          
+          UI.Log("tableBuilt,", listfields, this.inputs)
           Tabulator_Columns.push(
               {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", width:30, headerSort:false, cellClick:function(e, cell){
                   cell.getRow().toggleSelect();
@@ -286,6 +321,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
               Tabulator_Columns.push(column);
           }
           this.columns = Tabulator_Columns;
+          
           
           this.buldtable();
             

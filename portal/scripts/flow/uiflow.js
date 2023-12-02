@@ -2003,6 +2003,9 @@ var ProcessFlow = (function(){
 			this.flowobjchange = true;
 			let that = this;
 
+			if(flowobj =="" || flowobj == undefined){
+				flowobj = {}
+			}
 			this.flowobj  = flowobj; 
 			this.FlowJsonObj = new UI.JSONManager(this.flowobj,{allowChanges:true})
 		
@@ -7378,7 +7381,7 @@ var ProcessFlow = (function(){
 					//	UI.Log($(this))
 						let input = {
 							name: $(this).find('.parameter_name').val(),
-							datatype: $(this).find('.parameter_datatype').val(),
+							datatype: parseInt($(this).find('.parameter_datatype').val()),
 							list: $(this).find('.parameter_list').is(':checked'),
 							default: $(this).find('.parameter_default').val()
 						}
@@ -7389,7 +7392,7 @@ var ProcessFlow = (function(){
 					$('#parameter_output_table').find('tr').each(function(){
 						let output = {
 							name: $(this).find('.parameter_name').val(),
-							datatype: $(this).find('.parameter_datatype').val(),
+							datatype: parseInt($(this).find('.parameter_datatype').val()),
 							list: $(this).find('.parameter_list').is(':checked'),
 							default: $(this).find('.parameter_default').val()
 						}

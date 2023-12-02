@@ -370,6 +370,7 @@ var UI;
                     fail(error);
             })
         }
+        UI.Get = GetbyUrl;
         UI.GetbyUrl = GetbyUrl;
         UI.GetbyData = GetbyData;
         UI.Post = Post;
@@ -1885,12 +1886,46 @@ function rAFThrottle(func) {
             this.view = null;
             this.panel.innerHTML = "";
         }
+        getpagepanelviewcfg(panels, panelname, viewname){  
+            let that = this;          
+            for(var i=0;i<panels.length;i++){
+                let panel = panels[i]
+                UI.Log(panels, panel, panelname,viewname)
+                if(panel.name == panelname){
+                    if(panel.hasOwnProperty("panelviews")){
+                        for(var j=0; j<panel.panelviews.length;j++){
+
+                            if(panel.panelviews[j].name == viewname)
+                                return panel.panelviews[j];
+                        }
+                        return {"name": viewname}                    
+                    }
+                    return {"name": viewname}
+                }else if(panel.hasOwnProperty("panels")){
+                    if(panel.panels.length > 0){
+                        let view =  that.getpagepanelviewcfg(panel.panels,panelname, viewname)            
+                        if (view != null)
+                            return view;
+                    }
+                }else if(panel.hasOwnProperty("configuration")){
+                    if(panel.configuration.hasOwnProperty("panels"))
+                        if(panel.configuration.panels.length > 0){
+                            let view =  that.getpagepanelviewcfg(panel.configuration.panels,panelname, viewname)            
+                            if (view != null)
+                                return view;
+                        }
+                }
+            }
+            return null;
+        }
         changeview(view){
             //this.view.clear();
-            this.clear();            
+            this.clear();
+            let panelview = this.getpagepanelviewcfg(Session.CurrentPage.panels,this.name, view);
+            this.panelviewcfg = panelview
             this.configuration.view = {
-                "name": view,
-                "type": "document"
+               "name": view,
+               "type": "document"
             };
             this.displayview();
         }
@@ -1977,6 +2012,12 @@ function rAFThrottle(func) {
             if(!this.configuration.name)
             {
                 return;
+            }
+            
+            if(this.Panel.hasOwnProperty("panelviewcfg")){
+                UI.Log("view configuration:", JSON.parse(JSON.stringify(this.configuration)),this.Panel.panelviewcfg)
+                if(this.Panel.panelviewcfg != null)
+                    this.configuration.actions = Object.assign({}, this.configuration.actions,this.Panel.panelviewcfg.actions)
             }
             Session.viewResponsitory[UI.safeName(this.configuration.name)] = this.configuration;
 
@@ -2443,10 +2484,16 @@ function rAFThrottle(func) {
                         // UI.Log("selected action:",this.outputs.action,action)
                         Session.snapshoot.sessionData.action ="";
                         if(action.type == "Transaction"){
-                            
-                            this.executeTransaction(action.code, Session.snapshoot.sessionData, this.updateoutputs, function(error){ UI.ShowError(error)});
+                            if(action.code !="" && action.code){
+                                this.executeTransaction(action.code, Session.snapshoot.sessionData, this.updateoutputs, function(error){ UI.ShowError(error)});
+                            }
                             if(Session.snapshoot.sessionData.action !="")
                                 this.executeactionchain();
+                            
+                            if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }                  
                         }
                         else if(action.type == "Home"){
                             this.Panel.page.clear();
@@ -2504,14 +2551,28 @@ function rAFThrottle(func) {
                             if(action.script){
                                 action.script(Session.snapshoot.sessionData);
                             }
+                        /*    if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }  */
                         }else if(action.type == "popup"){
                             if(action.popupview){
                                 this.Panel.page.popupOpen(action.popupview);
                             }else {
                                 UI.ShowError("there is no popup view to load");
                             }
+                        /*    if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }  */
+
                         }else if(action.type == "close_popup" ){
                             this.Panel.page.popupClose();
+                            
+                         /*   if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }   */
                         }else if(action.type == "close_popup_refresh" ){
 
                             this.Panel.page.popupClose();
@@ -2711,7 +2772,7 @@ function rAFThrottle(func) {
                 this.loadfile(configuration);
             }
             else{
-                Session.pageResponsitory[this.configuration.name] = this.configuration;
+                Session.pageResponsitory[this.configuration.name] = JSON.parse(JSON.stringify(this.configuration));
 
                 this.init();
             }
@@ -2730,7 +2791,7 @@ function rAFThrottle(func) {
                 let result = JSON.parse(response);
                 that.configuration = Object.assign({},that.configuration,result.data,configuration);
                 UI.Log("loadconfig:",that.configuration,configuration, result.data);
-                Session.pageResponsitory[configuration.name] = that.configuration;
+                Session.pageResponsitory[configuration.name] = JSON.parse(JSON.stringify(that.configuration));
                 that.init();
             }, function(error){
                 UI.ShowError("Load the data wrong:",error);
@@ -2761,7 +2822,7 @@ function rAFThrottle(func) {
                 let pagedata = JSON.parse(response);               
                 
                 this.configuration = pagedata;
-                Session.pageResponsitory[this.configuration.name || configuration.file] = pagedata;
+                Session.pageResponsitory[this.configuration.name || configuration.file] = JSON.parse(JSON.stringify(pagedata));
                 this.init();
             }).catch((error) => {
                 UI.ShowError(error)
