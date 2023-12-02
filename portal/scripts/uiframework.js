@@ -1980,7 +1980,7 @@ function rAFThrottle(func) {
                 
                 await this.loadviewconfigurationfromdocument(configuration);
 
-            }else if(configuration.config) {
+            }else if(configuration.config && configuration.config != "" && configuration.config != null) {
                 await this.loadviewconfiguration(configuration);                 
             }
             else
@@ -2317,7 +2317,6 @@ function rAFThrottle(func) {
             }
             UI.Log(doc, body)
             this.view.appendChild(UI.createFragment(this.createcontext(body.innerHTML)));
-
         }
         createinputs(inputs){
             let inputscript = "";

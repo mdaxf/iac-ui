@@ -2948,7 +2948,7 @@ var ProcessFlow = (function(){
 						nodeSep: this.options.nodeSep,
 						edgeSep: this.options.edgeSep,
 						rankdir: "TB",
-					//	align: "UL",
+						align: "UL",
 						marginX: this.options.marginx,
 						marginY: this.options.marginy,
 						ranker: "longer-path"		
@@ -2956,12 +2956,12 @@ var ProcessFlow = (function(){
 				default:
 					joint.layout.DirectedGraph.layout(this.Graph, { 
 						setLinkVertices: true, 
-						nodeSep: this.options.nodeSep * 2,
-						edgeSep: this.options.edgeSep * 2,
+						nodeSep: this.options.nodeSep * 4,
+						edgeSep: this.options.edgeSep * 4,
 						rankdir: "LR",
-					//	align: "UL",
-						marginX: this.options.marginx * 2,
-						marginY: this.options.marginy * 2,
+						align: "UL",
+						marginX: this.options.marginx * 4,
+						marginY: this.options.marginy * 4,
 						ranker: "longer-path"			
 					}); 
 				break;
