@@ -17,69 +17,18 @@
       #form {
         max-width: 100%;
       }
-
-      .io-import-export {
-          bottom: 10px;
-      }
-      .io-import-export {
-          position: fixed;
-          left: 10px;
-      }
-      .io-control-list.io-horizontal, .io-control-list.io-horizontal li {
-          display: inline-block;
-      }
-      .io-import {
-          margin-right: 10px;
-      }
-      .io-control-list {
-          list-style: none;
-          padding: 5px;
-          margin: 0;
-      }
-      .io-control {
-          background: #FAFAFA;
-          border-radius: 2px;
-          border: solid 1px #E0E0E0;
-          padding: 5px;
-      }
-      li {
-          display: list-item;
-          text-align: -webkit-match-parent;
-      }
-
-      .icon-plus-circled:before {
-          content: '\f15b';
-      }
-
-      .icon-open:before {
-          content: '\f07c';
-      }
-
-      .icon-download:before {
-          content: '\f56d';
-      }
-      [class^="icon-"]:before, [class*=" icon-"]:before {
-          font-family: "FontAwesome";
-      }
-      [class^="icon-"]:before, [class*=" icon-"]:before {
-          font-style: normal;
-          font-weight: normal;
-          speak: none;
-          display: inline-block;
-          text-decoration: inherit;
-          width: 1em;
-          text-align: center;
-          font-variant: normal;
-          text-transform: none;
-          line-height: 1em;
-      }
+      
+      .fjs-container .fjs-powered-by{
+        height: 0px;
+        width: 0px;
+      }  
 
 
     </style>
   </head>
 
   <body>
-    <div class="io-import-export">
+    <!-- div class="io-import-export">
 
       <ul class="io-import io-control io-control-list io-horizontal">
         <li>
@@ -97,12 +46,18 @@
   
       <ul class="io-export io-control io-control-list io-horizontal">
         <li>
-          <a target="_blank" href="" class="download" title="Download form" jswidget="downloadForm" data-track="diagram:download-form">
+          <button title="Download form" jsaction="click:bio.download">
             <span class="icon-download"></span>
-          </a>
+          </button>
+        </li>
+        <li class="vr"></li>
+        <li>
+          <button title="Download form" id="formjs-save">
+            <span class="icon-download"></span>
+          </button>
         </li>
       </ul>
-    </div>
+    </div -->
     <div id="form"></div>
 
     <!--
@@ -126,13 +81,14 @@
       required editor script
     -->
     <script src="../scripts/formjs/form-editor.umd.js"></script>
-
+    <!--script src="https://unpkg.com/@bpmn-io/form-js@1.5.0/dist/form-editor.umd.js"></script-->
     <script>
+      var formeditor
       document.addEventListener('DOMContentLoaded', function() {
         var schema = JSON.parse(
           document.querySelector('[type="application/form-schema"]').innerText
         );
-        var str =  `{
+       /* var str =  `{
         "schemaVersion": 1,
         "exporter": {
           "name": "form-js",
@@ -143,32 +99,66 @@
         "type": "default"
       }`
 
-        schema = JSON.parse(str);
+        schema = JSON.parse(str);  */
         const container = document.querySelector('#form');
-    
-        FormEditor.createFormEditor({
+ 
+        //formeditor = new FormEditor({}) 
+        formeditor = FormEditor.createFormEditor({
           container,
           schema
         });
 
-        setTimeout(() => {
-          document.querySelector('.fjs-powered-by').remove();
-        }, 1000);
-        setTimeout(() => {
-          document.querySelector('.fjs-powered-by').remove();
-        }, 2000);
+        formeditor.then((obj) => {
+          var sendmessage = {
+            type: 'formeditorready'
+          }
 
+          window.parent.postMessage(sendmessage, "*");
+
+        }).catch((error) => {console.log(error)})
+
+        
+
+    /*    document.querySelector('#formjs-save').addEventListener('click', function() {
+            formeditor.then((obj) => {
+                var schemasa = obj["_state"]["schema"]
+                console.log(schemasa)
+                window.parent.postMessage(schemasa, "*");
+            }).catch((error) => {console.log(error)})
+        });  */
+
+        window.addEventListener("message", handleparentmessage, false);
       });
-      document.addEventListener('formjs.save', function(event) {
-        console.log('form saved', event.detail);
-      });
 
-      document.addEventListener('formjs.error', function(event) {
-        console.log('form error', event.detail);
-      });
+      
+      
+      function handleparentmessage(event){
+        console.log(event)
+        if (event.data) {
+          const message = event.data;
+          if (message.type === 'importschema'){
+            var schema = message.data;
+            console.log(schema)
+            formeditor.then((obj) => {
+              obj.importSchema(schema);
+            }).catch((error) => {console.log(error)})
+          }else if(message.type === 'saveschema'){
+            formeditor.then((obj) => {
+                var schemasa = obj["_state"]["schema"]
+                console.log(schemasa)
+                var sendmessage = {
+                  type: 'saveschemafromformjs',
+                  data: schemasa
+                }
+                window.parent.postMessage(sendmessage, "*");
+            }).catch((error) => {console.log(error)})
+          }
+        }
+      }
 
-
-
+      document.addEventListener("beforeunload", function(event) {
+        window.removeEventListener("message", handleparentmessage);
+      }, false);
     </script>
   </body>
 </html>

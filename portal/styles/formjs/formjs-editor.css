@@ -1907,7 +1907,8 @@
   .bio-properties-panel-feel-editor-container,
   .bio-properties-panel-feel-editor-container .bio-properties-panel-input,
   .bio-properties-panel-feel-container .cm-editor {
-    min-height: 100%;
+   /* min-height: 100%; */
+   /*max-height: 215px;; */
   }
   
   .bio-properties-panel-feel-checkbox,

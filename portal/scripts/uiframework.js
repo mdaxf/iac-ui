@@ -68,14 +68,14 @@ var IACMessageClient = function (server = ""){
 			
 			var topics = Object.keys(_client.CallbackMap);
 			
-			console.log(topics, _client)
+		//	console.log(topics, _client)
 			
 			for (var idx = 0; idx < topics.length; idx++)
 			{				
 				if(_client.CallbackMap.hasOwnProperty(topics[idx]))
 					if (_client.CallbackMap[topics[idx]].length > 0)
 						_client.connection.on(topics[idx], message => {
-							console.log("receive message for topic:", topic, message)
+						//	console.log("receive message for topic:", topic, message)
 							_client.executesubcallback(topics[idx], message);
 						});
 			}
@@ -98,7 +98,7 @@ var IACMessageClient = function (server = ""){
 			_client.CallbackMap[topic] = [];
 			_client.CallbackMap[topic].push(callback);
 			_client.connection.on(topic, message => {
-				console.log("receive message for topic:", topic, message)
+			//	console.log("receive message for topic:", topic, message)
 				_client.executesubcallback(topic,message);
 			});
 			
@@ -108,14 +108,14 @@ var IACMessageClient = function (server = ""){
 	}
 	
 	this.executesubcallback = function(topic,message){
-		console.log("execute the sub callback: ", topic, message)
+	//	console.log("execute the sub callback: ", topic, message)
 		if(!_client.CallbackMap.hasOwnProperty(topic))
 			return;
 		
 		var callbacks = _client.CallbackMap[topic];
 		for(var idx =0; idx<callbacks.length ; idx++ ){
-			console.log("execute: ")
-			console.log(callbacks[idx], message)			
+		//	console.log("execute: ")
+		//	console.log(callbacks[idx], message)			
 			callbacks[idx](message)
 		}
 	}
@@ -186,36 +186,39 @@ var IACMessageClient = function (server = ""){
 	
 	window.addEventListener('beforeunload', _client.Disconnect);
 
-    if (server !=""){
-        _client.Server  = server;
-        _client.serverUrl = _client.Server  + HubPath
-        _client.Connect();
-    } else{
-
-        UI.ajax.get(UI.CONTROLLER_URL+"/config").then((response) => {
-            localStorage.setItem(window.location.origin+"_"+"clientconfig", response);
-            var data = JSON.parse(response);
-            var server = data.signalrconfig.serverwc;
+  //  function init() {
+        if (server !=""){
             _client.Server  = server;
-            UI.Log("signalr server:", _client.Server)    
-            _client.serverUrl = _client.Server  + HubPath
-
-            _client.Connect();
-        }).catch((error) => {
-            if (!_client.Server  || _client.Server  =="")
-            {
-                let input = window.location.origin;
-                input = input.endsWith('/') ? input.slice(0, -1) :input;
-                _client.Server  = input;
-
-            }
-
             _client.serverUrl = _client.Server  + HubPath
             _client.Connect();
-        })
+        } else{
 
-    }
+            UI.ajax.get(UI.CONTROLLER_URL+"/config").then((response) => {
+                localStorage.setItem(window.location.origin+"_"+"clientconfig", response);
+                var data = JSON.parse(response);
+                var server = data.signalrconfig.serverwc;
+                _client.Server  = server;
+                UI.Log("signalr server:", _client.Server)    
+                _client.serverUrl = _client.Server  + HubPath
 
+                _client.Connect();
+            }).catch((error) => {
+                if (!_client.Server  || _client.Server  =="")
+                {
+                    let input = window.location.origin;
+                    input = input.endsWith('/') ? input.slice(0, -1) :input;
+                    _client.Server  = input;
+
+                }
+
+                _client.serverUrl = _client.Server  + HubPath
+                _client.Connect();
+            })
+
+        }
+//    }
+//    _client.init();
+//    _client.connection.start()
 }
 var IACMessageBus;
 var IACMessageBusClient = null;
@@ -390,7 +393,7 @@ var UI;
             this.clientid = "";
             this.createdon = "";
             this.expirateon = "";
-            this.tokenchecktime = 1000*60*1;
+            this.tokenchecktime = 1000*10*1;
             this.language = "en";
             this.timezone = "";
             this.logonpage = "Logon page";
@@ -398,6 +401,7 @@ var UI;
             this.updatedon = null;
             this.sessionkey= window.location.origin+"_"+ "user";
             this.loginurl = "login.html"
+            this.heartbittimer = null;
         }
         checkiflogin(success, fail){
             let userdata = localStorage.getItem(this.sessionkey);
@@ -425,13 +429,29 @@ var UI;
                 }
 
                 let parsedDate = new Date(this.expirateon);
+                let server  ="";
+                let localconfig = localStorage.getItem(window.location.origin+"_"+"clientconfig");
+                if(localconfig){
+                    let config = JSON.parse(localconfig);
+                    if(config.hasOwnProperty("signalrconfig")){
+                        let signalrconfig = config.signalrconfig;
+                        if(signalrconfig.hasOwnProperty("serverwc")){
+                            server = signalrconfig.serverwc;
+                        }
+                    }
+                }
+
 
                 if (!IACMessageBusClient)
-                    IACMessageBusClient = new IACMessageClient();
+                    IACMessageBusClient = new IACMessageClient(server);
 
            //     // UI.Log(this.token, parsedDate, new Date(), (parsedDate > new Date()))
+                var currentDate = new Date();
 
-                if(parsedDate > new Date()){
+           // Add 10 minutes to the current date and time
+                var tenMinutesLater = new Date(currentDate.getTime() + 10 * 60000); 
+
+                if(parsedDate < tenMinutesLater && parsedDate > new Date()){
                   //  // UI.Log("renew")
                     UI.ajax.post(UI.CONTROLLER_URL+"/user/login", {"username":this.username, "password":this.password, "token":this.token, "clientid": this.clientid, "renew": true}).then((response) => {
                         userjdata = JSON.parse(response);
@@ -450,6 +470,9 @@ var UI;
                         // UI.Log(userjdata)
                         localStorage.setItem(this.sessionkey, JSON.stringify(userjdata));
                         
+                    //    if(UI.Notifications.getData().data.length == 0)
+                    //        this.getNotification();
+
                         if(success){
                             success();                        
                         }
@@ -462,7 +485,7 @@ var UI;
                             return false;
                     })
                 }
-                else{
+                else if(parsedDate < new Date()){
                     UI.ShowError("User token expired, please login again.");
                     if(fail) 
                         fail();
@@ -470,6 +493,170 @@ var UI;
                     
             }
             return ;
+        }
+        async getNotification(){
+            UI.GetbyUrl(UI.CONTROLLER_URL+"/notification/get", function(response){
+                let jdata = (JSON.parse(response)).data;
+                UI.Log("get notifications:", jdata)
+                if(!(!jdata || jdata == null || jdata == undefined)){
+                
+                let keylist =[];
+                let notificationlist = [];
+
+                if(jdata.length > 0){
+                    for(var i=0;i<jdata.length;i++){
+                        let item = jdata[i];
+                        UI.Log("get notification:", item)
+                        if(item.hasOwnProperty("uuid")){
+                            keylist.push(item.uuid);
+                            notificationlist.push(item);
+                        }else{
+                            let uuid = UI.generateUUID();
+                            item.uuid = uuid;
+                            keylist.push(uuid);
+                            notificationlist.push(item);
+                        }
+                    }
+                    UI.Log("get notifications by list:", keylist, notificationlist)
+                    UI.Notifications.setItemsbyArray(keylist, notificationlist);
+                }
+                }
+            }, function(error){
+                UI.ShowError(error);
+            })
+            // subscribe the notification
+            if (!IACMessageBusClient){
+                let server  ="";
+                let localconfig = localStorage.getItem(window.location.origin+"_"+"clientconfig");
+                if(localconfig){
+                    let config = JSON.parse(localconfig);
+                    if(config.hasOwnProperty("signalrconfig")){
+                        let signalrconfig = config.signalrconfig;
+                        if(signalrconfig.hasOwnProperty("server")){
+                            server = signalrconfig.server;
+                        }
+                    }
+                }
+                IACMessageBusClient = new IACMessageClient(server);
+            
+            }
+            IACMessageBusClient.Subscribe("IAC_SYSTEM_NOTIICATION_REPLY", function(message){
+                let jdata = JSON.parse(message);
+                UI.Log(jdata)
+                if(jdata.hasOwnProperty("receipts")){
+                    receipts = jdata.receipts;
+                    if(! receipts.hasOwnProperty("all") && !receipts.hasOwnProperty(UI.login.username))
+                        return;
+                }
+
+                let uuid = jdata.data.uuid;
+                let comments = jdata.comments;
+                let notification = UI.Notifications.getData().data[uuid];
+                let updatedon = jdata.updatedon;
+                let updatedby = jdata.replyer;
+
+                let history ={
+                    "updatedon": updatedon,
+                    "updatedby": updatedby,
+                    "status": 1,
+                    "comments": comments
+                }        
+                                
+                let historyul = document.getElementById("iac-ui-notification-history-ul-"+uuid);
+             //   UI.Log(history, historyul, notification)    
+                let chatlist = document.getElementById("iac-ui-chat-container-list-" + uuid);
+
+                let histories = notification.histories;
+                histories.push(history);
+                notification.histories = histories;    
+                UI.Notifications.setItem(uuid, notification);
+            //    UI.Log(history, notification,historyul, chatlist)  
+            //    UI.Log(histories)
+                if(historyul != null && historyul != undefined && historyul != ""){
+                    Session.CurrentPage.pageheader.addNotificationHistoryItem(history, historyul, notification);
+                }
+                else if(chatlist){
+                    Session.CurrentPage.pageheader.addchatitem(history, chatlist);
+                    chatlist.scrollTop = chatlist.scrollHeight;
+                }
+                
+            })
+            IACMessageBusClient.Subscribe("IAC_SYSTEM_NOTIICATION_CLOSE", function(message){
+                let jdata = JSON.parse(message);
+                let uuid = jdata.uuid;
+                let notification = UI.Notifications.getItem(uuid);
+                if(notification.status == 1 && notification.sender != UI.login.username)
+                {
+                    let notificationBadge = document.getElementById("iac-ui-header-notification-count")
+                    let count  = notificationBadge.getAttribute("data-count")
+                    
+                    if(count == null || count == undefined || count == "")
+                        count = 0;
+                    else 
+                        count = parseInt(count);
+
+                    count = count -1;
+
+                    if(count > 0){
+                        notificationBadge.setAttribute("data-count", count);
+                        notificationBadge.innerText = count;
+                        notificationBadge.style.display = "block";
+                    }else{
+                        notificationBadge.setAttribute("data-count", "0");
+                        notificationBadge.innerText = "0";
+                        notificationBadge.style.display = "none";
+                    }
+                }
+                if($('.iac-ui-notification-container[datakey="'+uuid+'"]').length > 0)
+                    $('.iac-ui-notification-container[datakey="'+uuid+'"]').remove();
+                
+                UI.Notifications.removeItem(uuid);
+
+            })
+            IACMessageBusClient.Subscribe("IAC_SYSTEM_NOTIICATION", function(message){
+                UI.Log("receive notification:", message)
+                let jdata = JSON.parse(message).data;
+
+                if(jdata.hasOwnProperty("receipts")){
+                    receipts = jdata.receipts;
+                    if(! receipts.hasOwnProperty("all") && !receipts.hasOwnProperty(UI.login.username))
+                        return;
+                }
+
+                let notificationBadge = document.getElementById("iac-ui-header-notification-count")
+                let count  = notificationBadge.getAttribute("data-count")
+                
+                if(count == null || count == undefined || count == "")
+                    count = 0;
+                else 
+                    count = parseInt(count);
+
+                count = count + 1;
+
+                notificationBadge.setAttribute("data-count", count);
+                notificationBadge.innerText = count;
+                notificationBadge.style.display = "block";
+
+                let keylist =[];
+                let notificationlist = [];
+                if(!jdata.hasOwnProperty("uuid")){
+                    let uuid = UI.generateUUID();
+                    jdata.uuid = uuid;
+                    keylist.push(uuid);
+                    notificationlist.push(jdata)                            
+                }else
+                {
+                    keylist.push(jdata.uuid);
+                    notificationlist.push(jdata);
+                }
+                UI.Notifications.setItemsbyArray(keylist, notificationlist);
+                if($('#iac-ui-notification-container').length > 0){
+                    UI.Log("update the notification list") 
+                    let list = document.getElementById('iac-ui-notification-list')
+                    //Session.CurrentPage.pageheader.notificatonsRender(document.getElementById('iac-ui-notification-container'))
+                    Session.CurrentPage.pageheader.addNotification(jdata, list);
+                }
+            })
         }
         async login(username, password, success, fail){
             
@@ -485,7 +672,7 @@ var UI;
                 this.islogin = userjdata.islogin;
                 this.clientid = userjdata.clientid;
                 this.createdon = userjdata.createdon;
-                this.expirateon = userjdata.expirateon;
+                this.expirateon = userjdata.expirateon; 
                 this.language = userjdata.language;
                 this.timezone = userjdata.timezone;
             }
@@ -508,11 +695,14 @@ var UI;
                     userjdata.updatedon = new Date();
 
                     localStorage.setItem(this.sessionkey, JSON.stringify(userjdata));
+                    
+                    UI.ajax.get(UI.CONTROLLER_URL+"/config").then((response) => {
+                        localStorage.setItem(window.location.origin+"_"+"clientconfig", response);
+                    }).catch((error) => {
+                        UI.ShowError(error);
+                    })
 
-                    this.tokenupdatetimer = window.setTimeout(UI.tokencheck, this.tokenchecktime);
-
-                    if (!IACMessageBusClient)
-                        IACMessageBusClient = new IACMessageClient();
+                    this.tokenupdatetimer = window.setTimeout(this.checkiflogin, this.tokenchecktime);
 
                     if(success){
                         success();
@@ -520,6 +710,7 @@ var UI;
 
                 }).catch((error) => {
                     UI.ShowError(error);
+                    this.tokenupdatetimer = null
                     if(fail)
                         fail();
                 })
@@ -547,8 +738,13 @@ var UI;
 
                     localStorage.setItem(this.sessionkey, JSON.stringify(userjdata));
                     
-                    if (!IACMessageBusClient)
-                        IACMessageBusClient = new IACMessageClient();
+                    UI.ajax.get(UI.CONTROLLER_URL+"/config").then((response) => {
+                        localStorage.setItem(window.location.origin+"_"+"clientconfig", response);
+                    }).catch((error) => {
+                        UI.ShowError(error);
+                    })
+
+                    this.tokenupdatetimer = window.setTimeout(this.checkiflogin, this.tokenchecktime);
 
                     if(success){
                         success();
@@ -556,6 +752,7 @@ var UI;
 
                 }).catch((error) => {
                     UI.ShowError(error);
+                    this.tokenupdatetimer = null
                     if(fail)
                         fail();
                 })
@@ -563,7 +760,7 @@ var UI;
         }
         logout(success, fail){
             let userdata = localStorage.getItem(this.sessionkey);
-            
+            this.tokenupdatetimer = null;
 
             if(userdata){
                 let userjdata = JSON.parse(userdata);
@@ -620,7 +817,7 @@ var UI;
                 window.location.href = UI.userlogin.loginurl;
              //   new UI.Page({file:'pages/logon.json'});
             
-        })
+        })  
     }
 
     UI.tokencheck = tokencheck;
@@ -983,6 +1180,7 @@ var UI;
             jdata.createdon = new Date();
             jdata.data = {};
             jdata.language = UI.userlogin.language;
+            jdata.user = UI.userlogin.username;
             localStorage.setItem(this.sessionkey, JSON.stringify(jdata));
         }
 
@@ -997,6 +1195,16 @@ var UI;
                 this.initialize();
         }
 
+        validate(code){
+            let localdata = localStorage.getItem(this.sessionkey);
+            if(localdata){
+                let jdata = JSON.parse(localdata);
+                if(jdata.hasOwnProperty(code) && jdata[user] != UI.userlogin.username){
+                    this.initialize();
+                }
+            }else
+                this.initialize();
+        }
         getData(){
             let localdata = localStorage.getItem(this.sessionkey);
             if(localdata){
@@ -1008,9 +1216,21 @@ var UI;
                 return {
                     createdon: new Date(),
                     language: UI.userlogin.language,
+                    user: UI.userlogin.username,
                     data: {}
                 };
             }
+        }
+        removeItem(key){
+            let data = this.getData();
+            if(data){
+                let jdata = data.data                
+                if(jdata.hasOwnProperty(key)){
+                    delete jdata[key];
+                }
+                return true;
+            }
+            return false;
         }
         getItems(keys){
             let data = this.getData();
@@ -1087,6 +1307,11 @@ var UI;
         UI.skippedLngcodes = new UILocalStorage("skippedlngcodes");
     else
         UI.skippedLngcodes.validatelanguage();
+
+    if(!UI.Notifications)
+        UI.Notifications = new UILocalStorage("notifications");
+    else
+        UI.Notifications.validate("notifications");
 
     class UIMessage{
         constructor(message, type="Error"){
@@ -1474,7 +1699,7 @@ function rAFThrottle(func) {
         }
         static createPopup(menu) {
             var popup = new ContextPopup(menu);
-            this.popups.push(popup);
+        //    this.popups.push(popup);
             return popup;
         }
     }
@@ -1966,7 +2191,7 @@ function rAFThrottle(func) {
         async initialize(Panel,configuration){            
             UI.Log("initialize view",configuration)
             this.Panel = Panel;
-            if(configuration.name){
+          /*  if(configuration.name){
                 if(UI.safeName(configuration.name) in Session.viewResponsitory){
                     let cachedView = Session.viewResponsitory[UI.safeName(configuration.name)]
                     if(configuration.name == cachedView.name){                        
@@ -1975,7 +2200,7 @@ function rAFThrottle(func) {
                         return; 
                     }
                 }
-            }
+            }  */
             if(configuration.type =="document"){
                 
                 await this.loadviewconfigurationfromdocument(configuration);
@@ -2019,7 +2244,7 @@ function rAFThrottle(func) {
                 if(this.Panel.panelviewcfg != null)
                     this.configuration.actions = Object.assign({}, this.configuration.actions,this.Panel.panelviewcfg.actions)
             }
-            Session.viewResponsitory[UI.safeName(this.configuration.name)] = this.configuration;
+            Session.viewResponsitory[UI.safeName(this.configuration.name)] = Object.assign({},this.configuration);
 
             this.id = UI.safeId('view_'+UI.generateUUID());
             this.view = document.createElement("div");
@@ -2055,6 +2280,22 @@ function rAFThrottle(func) {
         async preloaddata(){
             let that = this
 
+            if(this.configuration.isform){
+                try{
+                    var components = this.configuration.formdata.components;
+                    for(var i=0; i<components.length;i++){
+                        let component = components[i];
+                        if(component.hasOwnProperty("key")){
+                            if(!this.configuration.inputs.hasOwnProperty(component.key)){
+                                this.configuration.inputs[component.key] = "";
+                            }
+                        }
+                    }
+                }catch(e){
+                    UI.Log(e)
+                }
+            }
+
             if(this.configuration.inputs)        
                 this.createinputs(this.configuration.inputs);
             if(this.configuration.lngcodes)
@@ -2087,10 +2328,11 @@ function rAFThrottle(func) {
           //  // UI.Log(this, this.Panel.panelElement);
             Session.views[this.id] = this;
             UI.Log("create viewL",this.configuration)
-
-     
-            
-            if(this.configuration.content){                
+   
+            if(this.configuration.isform){
+                this.buildform(this.configuration.formdata);
+            }            
+            else if(this.configuration.content){                
                 this.content = this.configuration.content;
                 this.view.innerHTML = UI.createFragment(this.createcontext(this.content));
             }else if(this.configuration.html){
@@ -2106,8 +2348,8 @@ function rAFThrottle(func) {
                 */
             } else if(this.configuration.file)
                 this.loadfile(this.configuration.file)
-            else if(this.configuration.form)
-                this.buildform(this.configuration.form);
+            /*else if(this.configuration.form)
+                this.buildform(this.configuration.form); */
             else if(this.configuration.code){
                 this.createwithCode(this.configuration.code);
             }
@@ -2250,10 +2492,87 @@ function rAFThrottle(func) {
                 UI.ShowError("Load the code wrong:",error);
             })
         }
-        buildform(form){
+        buildform(formdata){
             // the inputs which needs to be replaced will be liked as {key1}
             let that = this;
-            let text = JSON.stringify(form);
+            var attr = {
+                id: "form_"+this.id,
+                name: "form_"+this.id,
+                style: "width:100%;height:100%;"
+            }
+
+            new UI.FormControl(this.view, "div",attr);
+            let container = document.getElementById("form_"+this.id);
+           
+            var formview = FormViewer.createForm({
+                container:container,
+                schema: formdata,
+                data: that.inputs,
+            });
+            this.formview = formview
+            this.isform = true;
+            console.log(formview)
+
+            try{
+                formview.then((obj) => {
+                    /*
+                    obj.on("submit", function(data, event){
+                        that.outputs["action"] ="submit";
+                        UI.Log("form data by submit:",data,event);
+                        that.submit();
+                    })  */
+
+                    obj.on("reset", function(data){
+                        //UI.Log("form data by reset:",data);
+                       // formview.importSchema(formdata, that.inputs); 
+                    })
+                    formdata.components.forEach((item) => {
+                        if(item.type == 'button' && item.action == 'submit'){
+                            if(item.properties && item.properties.hasOwnProperty("action")){
+                                var action = item.properties.action;
+                                console.log($('#'+that.id).find('button[fieldid="'+item.id+'"]'))
+                                $('#'+that.id).find('button[fieldid="'+item.id+'"]').click(function() {
+                                    
+                                    that.outputs.action =action;
+                                  //  that.Context.outputs.action = action;
+                                    console.log('click button', item.id, action, that.outputs);
+                                    that.submit();
+                                });
+                            }
+        
+                        }
+                    })
+
+                }).catch((error) => {UI.Log(error)})
+
+            
+            /*    formview.on("submit", function(data){
+                    UI.Log("form data by submit:",data);
+                    that.submit();
+                })
+                formview.on("reset", function(data){
+                    UI.Log("form data by reset:",data);
+                    formview.importSchema(formdata, that.inputs); 
+                }) */
+            }catch(e){
+                UI.Log(e)
+            }
+            /*
+            formview.on("submit", function(data){
+                UI.Log("form data by submit:",data);
+                //that.submit(data);
+            })
+
+            formview.on("change", function(data){
+                UI.Log("form data by change:",data);
+                //that.submit(data);
+            })  */
+            /*
+            formview.then((obj) => {
+                obj.importSchema(formdata, that.inputs);
+              }).catch((error) => {UI.Log(error)})
+            */
+           /* let text = JSON.stringify(form);
 
             let result = text.replace(/\{([^}]+)\}/g, function(match, key) {
                 if (that.inputs.hasOwnProperty(key)) {
@@ -2263,7 +2582,7 @@ function rAFThrottle(func) {
               });
 
             let response = JSON.parse(result);  
-            new UI.Builder(this.view,response);
+            new UI.Builder(this.view,response); */
         }
         buildviewwithresponse(response){
             let that = this;
@@ -2467,10 +2786,18 @@ function rAFThrottle(func) {
             return newcontent;
         }
         submit(){
-        //    // UI.Log("submit",this.inputs,this.outputs);
-            Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, this.getoutputs());
-
-            if(this.outputs.action){
+        //    // UI.Log("submit",this.inputs,this.outputs);           
+            console.log("submit",this.inputs,this.outputs);
+            if(this.isform){
+                this.formview.then((obj) => {
+                    Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, obj["_state"]["data"])
+                }).catch((error) => {UI.Log(error)})
+                Session.snapshoot.sessionData.action = this.outputs.action
+                if(this.outputs.action){
+                    this.executeactionchain();
+                }
+            } else if(this.outputs.action){
+                Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, this.getoutputs());
                 this.executeactionchain();
             }
         }
@@ -2480,7 +2807,7 @@ function rAFThrottle(func) {
                 UI.Log(this.configuration.actions[this.outputs.action])
                     if(this.configuration.actions[this.outputs.action]){
                         var action = this.configuration.actions[this.outputs.action];
-                        // UI.Log("selected action:",this.outputs.action,action)
+                        UI.Log("selected action:",this.outputs.action,action,action.type)
                         Session.snapshoot.sessionData.action ="";
                         if(action.type == "Transaction"){
                             if(action.code !="" && action.code){
@@ -2504,12 +2831,23 @@ function rAFThrottle(func) {
                             let page = new Page({"name":"Portal Menu"});
                         }
                         else if(action.type == "Back"){
-                            if(Sesion.stack.length > 0){
+                            console.log(Session.stack)
+                            if(Session.stack.length > 1){
+                                Session.popFromStack();
                                 let stackitem = Session.popFromStack();
                                 this.Panel.page.clear();
-                                let page = new Page(stackitem.page.configuration);
+                                let page = new Page(stackitem.CurrentPage.configuration);
                                 
+                            }else{
+                                this.Panel.page.clear();
+                            //    Session.panels = {};
+                            //    Session.views = {};
+                            //    Session.pages = {};
+                                Session.clearstack();
+                                // clear the crumbs
+                                let page = new Page({"name":"Portal Menu"});
                             }
+
                         }
                         else if(action.type == "view"){
                             if(action.view){
@@ -2740,14 +3078,14 @@ function rAFThrottle(func) {
             if(pageID != null && pageID in Session.pages && pageID != undefined){
                 
                 // UI.Log("pageID:",pageID)
-                this.configuration = Session.pages[pageID].configuration;
+                this.configuration = Object.assign({},Session.pages[pageID].configuration);
                 this.configuration = Object.assign({},this.configuration,configuration);
                 this.id = pageID;
                 this.create();
             }
             else if(configuration.name in Session.pageResponsitory)
             {
-                this.configuration = Session.pageResponsitory[configuration.name];
+                this.configuration = Object.assign({},Session.pageResponsitory[configuration.name]);
                 this.configuration = Object.assign({},this.configuration,configuration);
                 let found = false;
                 
@@ -2799,7 +3137,7 @@ function rAFThrottle(func) {
         }
         loadfile(configuration){
             if(configuration.file in Session.pageResponsitory){
-                this.configuration =  Session.pageResponsitory[configuration.file];
+                this.configuration =  Object.assign({},Session.pageResponsitory[configuration.file]);
                 let found = false;
                 if(Session.pages && Session.pages.length > 0){
                     for(var key in Session.pages){
@@ -2975,7 +3313,7 @@ function rAFThrottle(func) {
                 Session.pushToStack(stackitem);                                
             }
             
-            new Pageheader(page)
+            this.pageheader = new Pageheader(page)
 
             this.setevents();
 
@@ -3157,7 +3495,8 @@ function rAFThrottle(func) {
                 let headerRight = this.createElAndAppend(header, "div", "iac-ui-page-header-right");
                 this.headerClock = this.createElAndAppend(headerRight, "span", "iac-ui-header-clock clock");
                 this.headerUserinfo = this.createElAndAppend(headerRight, "span", "iac-ui-header-userinfo");
-                this.headerUserimage = this.createElAndAppend(headerRight, "span", "iac-ui-header-userimage");                                
+                this.headerUserimage = this.createElAndAppend(headerRight, "span", "iac-ui-header-userimage"); 
+                this.headerNotification = this.createElAndAppend(headerRight, "span", "iac-ui-header-notification");                               
                 this.headerMenuicon = this.createElAndAppend(headerRight, "span", "iac-ui-header-menuIcon");
                 root.insertBefore(header, root.firstChild);
                 this.rightElementRenderer();
@@ -3173,9 +3512,10 @@ function rAFThrottle(func) {
             
             this.clockRenderer();
             this.userInfoRenderer();
-            
+            this.headerNotificationRenderer();    
             
         };
+        
         getUserLocalTime(offset, culture) {
             let d = new Date();
             let utc = d.getTime() + d.getTimezoneOffset() * 60000;
@@ -3207,6 +3547,632 @@ function rAFThrottle(func) {
                 }
         
         };
+        headerNotificationRenderer(){
+            let that = this;
+            let init = true;
+            if (init) {
+                    let element = that.createElAndAppend(this.headerNotification, "span", "iac-ui-header-notification");
+                    element.id = "iac-ui-header-notification";
+
+                    let notificationdiv = that.createElAndAppend(element, "div", "iac-ui-header-notification-div");
+                    let icon = that.headerIconRender("notification", "notification.png");
+                    notificationdiv.appendChild(icon);
+                    let notificationbadge = that.createElAndAppend(notificationdiv, "span", "iac-ui-header-notification-count");
+                    notificationbadge.id = "iac-ui-header-notification-count"
+                 //   notificationbadge.textContent ="0";
+                 //   notificationbadge.style.display = "none";
+                    
+                    let notifications = UI.Notifications.getData()
+                    let newnotificationcount = 0 ;            
+                    for(var key in notifications.data){
+                        let notification = notifications.data[key];
+                        if(notification.status != 4 && 
+                            notification.sender != UI.userlogin.username &&
+                            (
+                            ( notification.receipts.hasOwnProperty(UI.userlogin.username) && notification.receipts[UI.userlogin.username] == 1)
+                            || (notification.receipts.hasOwnProperty("all") && !notification.receipts.hasOwnProperty(UI.userlogin.username) )
+                            || (notification.receipts.hasOwnProperty("") && !notification.receipts.hasOwnProperty(UI.userlogin.username) ))){
+                            newnotificationcount++;
+                        }                       
+                    };
+
+                    notificationbadge.textContent = newnotificationcount;
+                    notificationbadge.setAttribute("count", newnotificationcount);
+                    if(newnotificationcount > 0){                            
+                        notificationbadge.style.display = "block";
+                    }else{
+                        notificationbadge.style.display = "none";
+                    }
+
+                    icon.addEventListener("click", function(){
+                        let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+                        let container = document.createElement("div");
+                        container.id = "iac-ui-notification-container"
+                        container.style.display = "flex";
+                        container.style.flexDirection = "column";
+                        container.style.alignItems = "flex-start";
+                        container.style.justifyContent = "flex-start";
+                        container.style.minWidth = "450px";
+                        container.style.maxWidth = "500px";
+                        container.style.minHeight = "200px";
+                        container.style.height = (height - 60) + "px"
+                        container.style.backgroundColor = "white";
+                        container.style.overflow = "auto";
+                        that.createElAndAppend(container, "h2", "iac-ui-header-notification-title", "Notifications")
+
+                        let newnotificationcount = that.notificatonsRender(container)
+                     /*   notificationbadge.textContent = newnotificationcount;
+                        if(newnotificationcount > 0){                            
+                            notificationbadge.style.display = "block";
+                        }else{
+                            notificationbadge.style.display = "none";
+                        }
+                        */
+                        let chatbox = that.createElAndAppend(container, "div", "iac-ui-header-notification-chatbox");
+                        chatbox.addEventListener('click', function(event) {
+                            // Prevent the click event from propagating to the parent
+                            event.stopPropagation();
+                        
+                        });
+
+                        let chatboxtopic= that.createElAndAppend(chatbox, "input", "iac-ui-header-notification-chatbox-topic");
+                        chatboxtopic.placeholder = "Enter topic here"
+                        let chartreceiptscontainer = that.createElAndAppend(chatbox, "div", "iac-ui-header-notification-chatbox-receipts-container");
+                        chartreceiptscontainer.style.display = "-webkit-flex";
+                        chartreceiptscontainer.style.webkitFlexDirection = "row";
+                        chartreceiptscontainer.style.webkitFlexWrap = "wrap";
+                        chartreceiptscontainer.style.webkitAlignItems = "flex-start";
+                        chartreceiptscontainer.style.webkitJustifyContent = "flex-start";
+                        chartreceiptscontainer.style.flexShrink = "0";
+                        let chatreceipts = that.createElAndAppend(chartreceiptscontainer, "input", "iac-ui-header-notification-chatbox-receipts");
+                        chatreceipts.type = "text";
+                        chatreceipts.placeholder = "Enter receipter separated by ;"
+                        chatreceipts.id = "iac-ui-header-notification-chatbox-receipts"
+                        chatreceipts.style.height = "30px"
+                        
+                    //    let chatreceiptstokencontainer = that.createElAndAppend(chartreceiptscontainer, "div", "iac-ui-header-notification-chatbox-receipts-token-container");
+                    //    chatreceiptstokencontainer.id = "iac-ui-header-notification-chatbox-receipts-token-container"
+
+                        let chatboxinput = that.createElAndAppend(chatbox, "textarea", "iac-ui-header-notification-chatbox-input");
+                        chatboxinput.placeholder = "Enter message here"
+
+                        let actionsection = that.createElAndAppend(chatbox, "div", "iac-ui-header-notification-chatbox-action-section");
+                        actionsection.style.display = "-webkit-flex";
+                        actionsection.style.webkitFlexDirection = "row";
+                        actionsection.style.webkitFlexWrap = "wrap";
+                        actionsection.style.justifyContent = "space-around";
+                        actionsection.style.alignItems = "center";
+                        let chatboxbutton = that.createElAndAppend(actionsection, "button", "iac-ui-header-notification-chatbox-button");                        
+                        that.createElAndAppend(chatboxbutton, "span", "", "Send");
+                        let privatelabel = that.createElAndAppend(actionsection, "span", "","Private:");
+                        privatelabel.htmlFor = "iac-ui-header-notification-chatbox-chekbox";
+                        privatelabel.style.color ="black"
+                        let privatecheckbox = that.createElAndAppend(actionsection, "input", "iac-ui-header-notification-chatbox-chekbox");  
+                        privatecheckbox.id = "iac-ui-header-notification-chatbox-chekbox";
+                        privatecheckbox.type = "checkbox";
+                        privatecheckbox.checked = false;
+                        let chatboxbuttoncancel = that.createElAndAppend(actionsection, "button", "iac-ui-header-notification-chatbox-button-cancel");
+                        that.createElAndAppend(chatboxbuttoncancel, "span", "", "Clear");
+                        chatboxbuttoncancel.addEventListener("click", function(){
+                            chatboxtopic.value = "";
+                            chatreceipts.value = "";
+                            chatboxinput.value = "";
+                            $('.iac-ui-chatbox-receipters-token').remove();
+                        })
+
+                        chatreceipts.addEventListener("keyup", function(event) {
+                            if (event.keyCode === 13) {
+                                event.preventDefault();
+                                chatboxbutton.click();
+                            }
+                            if (event.key === ';' || event.keyCode === 186 || event.keyCode === 59) {
+                                const inputField = document.getElementById('iac-ui-header-notification-chatbox-receipts');
+                                const tokenContainer = document.getElementById('iac-ui-header-notification-chatbox-receipts-token-container');
+                                const inputValue = inputField.value.trim();
+                                if (inputValue === '') {
+                                    alert('Please enter a value');
+                                    return;
+                                }
+                                const tokens = inputValue.split(';');
+                                tokens.forEach(token => {
+                                    if(token.trim() != ""){
+                                        const option = that.createToken(token);                                    
+                                        chartreceiptscontainer.appendChild(option);
+                                    }
+                                });
+
+                                inputField.value = '';
+
+                            }
+                        });
+
+                        chatboxbutton.addEventListener("click", function(){
+                            let topic = chatboxtopic.value;
+                            let receipts = chatreceipts.value.split(';');
+                            for(var i=0;i<$('.iac-ui-chatbox-receipters-token-value').length;i++){
+                                receipts.push($('.iac-ui-chatbox-receipters-token-value')[i].textContent)
+                            }
+
+                            let receiptobj = {}
+                            let privatemessage = document.querySelector(".iac-ui-header-notification-chatbox-chekbox").checked;
+                            for(var i=0;i<receipts.length;i++){
+                                receiptobj[receipts[i]] = 1;
+                            }
+                            if(receipts.length == 0 && !privatemessage)
+                                receiptobj ={
+                                    "all": 1
+                            }
+                            
+                            let message = chatboxinput.value;
+                            let notifdata = {
+                                "uuid": UI.generateUUID(),
+                                "topic": topic,
+                                "receipts": receiptobj, 
+                                "private": privatemessage,                               
+                                "status": 1,
+                                "message": message,
+                                "sender": UI.userlogin.username,
+                                "system.createdon": new Date().toISOString(),
+                                "system.createdby": UI.userlogin.username,
+                                "system.updatedon": new Date().toISOString(),
+                                "system.updatedby": UI.userlogin.username,
+                                "histories":[{
+                                    "updatedby": UI.userlogin.username,
+                                    "updatedon": new Date().toISOString(),
+                                    "status": 1,
+                                    "comments": "New Notification"
+                                }]
+                            }
+                            let data = {
+                                data: notifdata
+                            }
+                            UI.Post("/notification/new", data, function(response){
+                                UI.Log("send notification:",response)
+
+                                if (!IACMessageBusClient)
+                                    IACMessageBusClient = new IACMessageClient();
+
+                                IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION", data);
+
+                                chatboxtopic.value = "";
+                                chatreceipts.value = "";
+                                chatboxinput.value = "";
+                                $('.iac-ui-chatbox-receipters-token').remove();
+
+                            }, function(error){
+                                UI.ShowError(error)
+                            })
+                            //UI.Notifications.send(topic, receipts, message);
+                        })
+                        let popup = UI.ContextPopup.createPopup(container);
+                        
+                    //    popup.element = list
+                        element.appendChild(popup.element);
+                      //  UI.Log("select the notification,",list, popup)
+                        popup.open();
+                        document.querySelector(".iac-ui-header-popup").style.maxWidth = "500px";
+                        document.querySelector(".triangle").style.left = "430px"
+                        document.querySelector(".iac-ui-header-popup").style.transform = "translateX(-430px)";
+                        
+                    })   
+                    that.headerNotification.appendChild(element);                
+                    return element;
+            }
+        }
+        createToken(value){
+            const tokenContainer = document.createElement('div');
+            tokenContainer.className = 'iac-ui-chatbox-receipters-token';
+
+            const tokenValue = document.createElement('span');
+            tokenValue.className = 'iac-ui-chatbox-receipters-token-value';
+            tokenValue.textContent = value;
+
+            const removeToken = document.createElement('span');
+            removeToken.className = 'iac-ui-chatbox-receipters-remove-token';
+            removeToken.innerHTML = '&#10006;'; // Cross symbol
+            removeToken.onclick = function () {
+                tokenContainer.remove();
+            };
+
+            tokenContainer.appendChild(tokenValue);
+            tokenContainer.appendChild(removeToken);
+
+            return tokenContainer;
+        }
+        notificatonsRender(container){
+            let that = this
+            let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+            let list = document.createElement("ul");
+            list.style.height = (height - 215) + "px"
+            list.style.overflowY = "auto"
+            list.style.overflowX = "hidden"
+            list.style.flexDirection = "column"
+            list.id = 'iac-ui-notification-list'
+
+            let notifications = UI.Notifications.getData()
+            let newnotificationcount = 0 ;            
+            for(var key in notifications.data){
+                let notification = notifications.data[key];
+                if(notification.status != 4 && (
+                    ( notification.receipts.hasOwnProperty(UI.userlogin.username) && notification.receipts[UI.userlogin.username] == 1)
+                    || (notification.receipts.hasOwnProperty("all") && !notification.receipts.hasOwnProperty(UI.userlogin.username)  ))){
+                    newnotificationcount++;
+                }
+                that.addNotification(notification,list)
+            };
+                       
+            container.appendChild(list);
+            return newnotificationcount
+        }
+        addNotificationHistoryItem(history, historyul, notification){
+            let that = this
+            UI.Log(history, historyul, notification)
+            let historyitemcontainer = that.createElAndAppend(historyul,"div","iac-ui-notification-history-item-container") 
+            historyitemcontainer.display = "-webkit-flex";
+            historyitemcontainer.webkitFlexDirection = "column";
+            historyitemcontainer.webkitFlexWrap = "wrap";
+            historyitemcontainer.justifyContent = "space-around";
+            let historyitem = that.createElAndAppend(historyitemcontainer,"li")
+
+            historyitem.style.width = "410px"
+            historyitem.style.height= "max-content"                        
+            historyitem.style.borderTop = "1px solid blue"
+        //    let historyitema = that.createElAndAppend(historyitem, "a");
+
+            var utcDateString = history["updatedon"];
+            var utcDate = new Date(utcDateString);
+                    // Convert to local date and time
+            var localDateString = utcDate.toLocaleDateString();
+            var localTimeString = utcDate.toLocaleTimeString();
+
+            let dtsection = that.createElAndAppend(historyitem, "div", "");
+            
+            dtsection.style.display = "-webkit-flex";
+            dtsection.style.webkitFlexDirection = "row";
+
+            that.createElAndAppend(dtsection, "span", "", localDateString);
+            that.createElAndAppend(dtsection, "span", "", localTimeString);
+
+            let respondericon = that.headerIconRender("user", "images/avatardefault.png","span")
+            dtsection.appendChild(respondericon)
+            that.createElAndAppend(dtsection, "span", "", history.updatedby);
+
+            let replyaction = that.createElAndAppend(dtsection, "a", "iac-ui-notification-history-replay");
+            replyaction.textContent = "Reply ->"
+            replyaction.addEventListener("click",function(event){
+                event.stopPropagation();
+                let replysection = that.createElAndAppend(historyitem, "div", "iac-ui-notification-history-replay-section");
+                replysection.style.display = "-webkit-flex";
+                replysection.style.flexDirection = "column";
+                replysection.style.flexWrap = "wrap";
+
+                let replycontent = that.createElAndAppend(replysection, "textarea", "iac-ui-notification-history-replay-content");
+                replycontent.style.width = "400px"
+                replycontent.style.height = "100px"
+                replycontent.style.marginLeft = "10px"
+                replycontent.style.marginTop = "10px"
+
+                let replybutton = that.createElAndAppend(replysection, "button", "iac-ui-notification-history-replay-button");
+                replybutton.textContent = "Send"
+                replybutton.addEventListener("click", function(event){
+                    event.stopPropagation();
+                    
+                    let data = {
+                        data: notification,
+                        status:0,
+                        comments: replycontent.value,
+                        replyer: UI.userlogin.username,
+                        updatedon: new Date().toISOString(),
+                    }
+                    UI.Post("/notification/response", data, function(response){
+                        UI.Log("reply notification:",response)
+
+                        replysection.remove()
+                     //   replybutton.remove();
+
+                        if (!IACMessageBusClient)
+                            IACMessageBusClient = new IACMessageClient();
+
+                        IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_REPLY", data);
+
+                    }, function(error){
+                        UI.ShowError(error)
+                    })
+                })
+            })
+
+            that.createElAndAppend(historyitem, "div", "", history.comments);
+        }
+        addNotification(notification,list){
+            let that = this;
+            let msgcontainer = that.createElAndAppend(list, "div", "iac-ui-notification-container");
+            msgcontainer.style.display = "-webkit-flex";
+            msgcontainer.style.webkitFlexDirection = "column";
+            msgcontainer.style.webkitFlexWrap = "wrap";
+            msgcontainer.style.justifyContent = "space-around";
+            msgcontainer.setAttribute("datakey",notification.uuid);
+
+            
+            UI.Log(notification)
+            let li = that.createElAndAppend(msgcontainer, "li");
+            li.style.width = "440px"
+            li.style.height ="fit-content"
+            li.style.overflow = "hidden"
+            li.style.borderBottom = "2px solid burlywood"
+                    //    let a = that.createElAndAppend(li, "a");
+            let itemheader = that.createElAndAppend(li, "div", "iac-ui-notification-header");
+            itemheader.style.display = "-webkit-flex";
+            itemheader.style.webkitFlexDirection = "row";
+            
+                    var utcDateString = notification["system.createdon"];
+                    var utcDate = new Date(utcDateString);
+                                 // Convert to local date and time
+                    var localDateString = utcDate.toLocaleDateString();
+                    var localTimeString = utcDate.toLocaleTimeString();
+                        let dtsection = that.createElAndAppend(itemheader, "div", "");
+                        that.createElAndAppend(dtsection, "span", "", localDateString);
+                        that.createElAndAppend(dtsection, "span", "", localTimeString);
+
+                        let sendericon = that.headerIconRender("user", "images/avatardefault.png", "span");
+                        itemheader.appendChild(sendericon)                            
+                        that.createElAndAppend(itemheader, "span", "", notification.sender);
+
+                        //that.createElAndAppend(a, "span", "", notification);
+            let item = that.createElAndAppend(li, "span", "", notification.topic);
+                        item.style.webkitFlexWrap = "wrap";
+                        item.style.flexWrap = "wrap";
+            
+            let itemaction = that.createElAndAppend(li, "div", "iac-ui-notification-action");
+                        itemaction.style.display = "-webkit-flex";
+                        itemaction.style.webkitFlexDirection = "row";
+                        itemaction.style.webkitFlexWrap = "wrap";
+                        itemaction.style.justifyContent = "space-around";
+                        itemaction.style.alignItems = "center";
+                        let messageaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-message");
+                        messageaction.textContent = "Message ->";
+                        messageaction.setAttribute("lngcode", "Message");
+                       
+
+                        let historyaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-history");
+                        historyaction.textContent = "History ->";
+                        historyaction.setAttribute("lngcode", "History");
+
+                        let chatmodeaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-history");
+                        chatmodeaction.textContent = "Chat Mode ->";
+                        chatmodeaction.setAttribute("lngcode", "ChatMode");
+
+                        let closeaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-close");
+                        closeaction.textContent = "Close ->";
+                        closeaction.setAttribute("lngcode", "Close");
+
+                        closeaction.addEventListener("click", function(event){
+                            event.stopPropagation();
+                        //    let key = event.target.parentElement.parentElement.parentElement.datakey;                                
+                            
+                        //    UI.Notifications.removeItem(key);
+                            let notificationdata = {
+                                data: notification,
+                                status:4,
+                                comments: 'close notification'
+                            }
+                            UI.Post("/notification/response", notificationdata, function(response){
+                                UI.Log("close notification:",response)
+
+                            //    event.target.parentElement.parentElement.parentElement.remove();
+                                
+                                if (!IACMessageBusClient)
+                                    IACMessageBusClient = new IACMessageClient();
+
+                                IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_CLOSE", notificationdata);
+
+                            }, function(error){
+                                UI.ShowError(error)
+                            })
+                        })
+                     //   item.textContent = notification.topic;    
+                     //   let content = that.createElAndAppend(li, "span", "", notification.message);                        
+                       // content.textContent = notification.message;
+                        let contentsection = that.createElAndAppend(li, "div", "iac-ui-notification-content");
+                        contentsection.style.display = "none"
+                        contentsection.innerHTML = notification.message;                        
+                        contentsection.style.display = "contents"
+                        contentsection.style.textWrap = "pretty"
+                        contentsection.style.position = "relative"
+                        contentsection.style.left = "10px"
+                        contentsection.style.marginLeft = "10px"
+                        
+                        let historysection = that.createElAndAppend(li, 'div','iac-ui-notification-history')
+                        historysection.style.display = "none"
+                        historysection.style.position = "relative"
+                        historysection.style.left = "20px"
+                        historysection.style.marginLeft = "20px"
+
+                        let historyul = that.createElAndAppend(historysection, "ul")
+                        historyul.style.webkitBoxShadow = "none";
+                        historyul.style.boxShadow = "none";
+                        historyul.id = "iac-ui-notification-history-ul-"+notification.uuid
+                        
+                    if(notification.hasOwnProperty("histories")){
+                        UI.Log(notification["histories"])
+                        for(var i=0;i< notification["histories"].length; i++)
+                        {
+                            let history = notification["histories"][i]
+                            UI.Log(i, history, historyul)
+                            that.addNotificationHistoryItem(history, historyul, notification)
+                        }
+                    }
+                        
+                        messageaction.addEventListener("click", function(event){
+                            event.stopPropagation();
+                            if(contentsection.style.display == "none")
+                                contentsection.style.display = ""
+                            else{
+                                contentsection.style.display = "none"
+                            }
+                        })
+
+                        historyaction.addEventListener('click', function(event){
+                            event.stopPropagation();
+                            
+                            if(historysection.style.display == "none")
+                                historysection.style.display = ""
+                            else{
+                                historysection.style.display = "none"
+                            }
+                        })
+
+                        chatmodeaction.addEventListener('click', function(event){
+                            event.stopPropagation();
+                            that.chatboxRender(notification)
+                        })
+
+                        li.addEventListener("click", function(event){
+                            event.stopPropagation();
+                        })
+                        $('.iac-ui-notification-content').hide();
+        }
+        chatboxRender(notification){
+            let that = this
+            let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+            let container = document.createElement("div");
+            container.id = "iac-ui-chat-container"
+            container.style.display = "flex";
+            container.style.flexDirection = "column";
+            container.style.alignItems = "flex-start";
+            container.style.justifyContent = "flex-start";
+            container.style.minWidth = "450px";
+            container.style.maxWidth = "500px";
+            container.style.minHeight = "200px";
+            container.style.height = (height - 60) + "px"
+            container.style.backgroundColor = "white";
+            container.style.overflow = "auto";
+            container.style.border = "1px solid darkgrey";
+            container.addEventListener('click', function(event) {
+
+                // Prevent the click event from propagating to the parent
+                event.stopPropagation();
+            });
+
+            that.createElAndAppend(container, "h3", "iac-ui-chat-container-title", notification.topic)
+
+            
+            let chatlist = that.createElAndAppend(container, "ul", "iac-ui-chat-container-list");
+            chatlist.id = "iac-ui-chat-container-list-" + notification.uuid;
+            chatlist.style.display = "flex";
+           // chatlist.style.webkitFlexDirection = "column";
+           // chatlist.style.webkitFlexWrap = "wrap";
+            chatlist.style.justifyContent = "flex-start";
+            chatlist.style.alignContent = "flex-start";
+            chatlist.style.flexShrink = "0";
+            chatlist.style.height = (height - 200) + "px"
+            chatlist.style.overflowY = "auto";
+            chatlist.style.overflowX = "hidden";
+            chatlist.style.flexFlow = "wrap";
+
+            if(notification.hasOwnProperty("histories")){
+                for(var i=0;i< notification["histories"].length; i++){
+                    let history = notification["histories"][i]
+                    if(i==0)
+                        history.comments = notification.message;
+
+                    that.addchatitem(history, chatlist)
+                }
+            }
+
+            let inputsection = that.createElAndAppend(container, "div", "iac-ui-chat-container-input-section");
+            inputsection.style.display = "-webkit-flex";
+            inputsection.style.webkitFlexDirection = "row";
+            let chatinput = that.createElAndAppend(inputsection, "textarea", "iac-ui-chat-container-input");
+            chatinput.style.width = "450px"
+            chatinput.style.height = "100px"
+            chatinput.style.marginLeft = "1px"
+            chatinput.style.marginTop = "5px"
+            let sendbutton = that.createElAndAppend(inputsection, "button", "iac-ui-chat-container-input-button", "Send");
+            sendbutton.addEventListener("click", function(event){
+                event.stopPropagation();
+                notification = UI.Notifications.getData().data[notification.uuid]
+                let data = {
+                    data: notification,
+                    status:0,
+                    comments: chatinput.value,
+                    replyer: UI.userlogin.username,
+                    updatedon: new Date().toISOString(),
+                }
+                UI.Post("/notification/response", data, function(response){
+                    UI.Log("reply notification:",response)
+
+                    chatinput.value = "";
+
+                    IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_REPLY", data);
+
+                }, function(error){
+                    UI.ShowError(error)
+                })
+            })
+            chatinput.addEventListener("keyup", function(event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    sendbutton.click();
+                }
+            })
+
+            let popup = UI.ContextPopup.createPopup(container);
+            let element = document.getElementById('iac-ui-header-notification')                        
+                    //    popup.element = list
+            element.appendChild(popup.element);
+                      //  UI.Log("select the notification,",list, popup)
+            popup.open();
+            document.querySelector(".iac-ui-header-popup").style.maxWidth = "500px";
+            document.querySelector(".triangle").style.left = "430px"
+            document.querySelector(".iac-ui-header-popup").style.transform = "translateX(-430px)";
+        }
+        addchatitem(history, chatlist){
+            let that = this
+            let itemsection = that.createElAndAppend(chatlist, "div", "iac-ui-chat-container-list-item-section");
+            itemsection.style.display = "-webkit-flex";
+            itemsection.style.width = "100%"
+            let chatitem = that.createElAndAppend(itemsection, "li", "iac-ui-chat-container-list-item");
+            chatitem.style.display = "-webkit-flex";
+            chatitem.style.webkitFlexDirection = "column";
+            chatitem.style.webkitFlexWrap = "wrap";
+            chatitem.style.flexWrap = "wrap";
+            chatitem.style.width = "445px"
+            chatitem.style.height = "max-content"
+        //    chatitem.style.width = "445px"
+            let content = history.comments;
+            let dt = new Date(history.updatedon);
+            
+            if(history.updatedby == UI.userlogin.username){
+                that.createElAndAppend(chatitem, "div", "iac-ui-chat-container-list-item-send-dt", dt.toLocaleDateString() + " " + dt.toLocaleTimeString());
+                let contentsection = that.createElAndAppend(chatitem, "div", "iac-ui-chat-container-list-item-send-content");
+                contentsection.style.display = "-webkit-flex";
+                contentsection.style.webkitFlexDirection = "column";
+                contentsection.style.webkitFlexWrap = "wrap";
+                contentsection.style.flexFlow = "wrap";
+                that.createElAndAppend(contentsection, "span", "iac-ui-chat-container-list-item-send-content", content);
+                that.createElAndAppend(contentsection, "span", "iac-ui-chat-container-list-item-sender", "Me");
+                let respondericon = that.headerIconRender("user", "images/avatardefault.png","span")
+                contentsection.appendChild(respondericon)
+                chatitem.style.alignItems = "flex-end";
+                chatitem.style.justifyContent = "flex-end";
+            }
+            else{
+                chatitem.style.alignItems = "flex-start";
+                chatitem.style.justifyContent = "flex-start";
+                that.createElAndAppend(chatitem, "div", "iac-ui-chat-container-list-item-send-dt", dt.toLocaleDateString() + " " + dt.toLocaleTimeString());
+
+                let contentsection = that.createElAndAppend(chatitem, "div", "iac-ui-chat-container-list-item-send-content");
+                contentsection.style.display = "-webkit-flex";
+                contentsection.style.webkitFlexDirection = "column";
+                contentsection.style.webkitFlexWrap = "wrap";
+                contentsection.style.flexFlow = "wrap";
+                let respondericon = that.headerIconRender("user", "images/avatardefault.png","span")
+                contentsection.appendChild(respondericon)
+                
+                that.createElAndAppend(contentsection, "span", "iac-ui-chat-container-list-item-sender", history.updatedby);
+                that.createElAndAppend(contentsection, "span", "iac-ui-chat-container-list-item-receive-content", content);
+            }
+        }
         headerIconRender(actionCode, imageUrl, tag = "a") {
             let element = this.createEl(tag);
             if (imageUrl) {
@@ -3239,46 +4205,57 @@ function rAFThrottle(func) {
 
                             element.classList.add("iac-ui-header-action");
                             element.classList.add("active");
-                            let list = document.createElement("ul");
-                            let li = that.createElAndAppend(list, "li");
-                            let a = that.createElAndAppend(li, "a");
-                            const icon = that.headerIconRender("logout", "", "span");
-                            icon.classList.add("iac-ui-header-action");
-                            a.appendChild(icon);
-                            let item = that.createElAndAppend(a, "span", "", "Logout");
-                            item.textContent = "Logout";
-                            item.setAttribute("lngcode", "Logout");    
-                            li.addEventListener("click", function () {
-                                // UI.Log("logout")
-                                UI.userlogin.logout();
-                            });
+
+                            element.addEventListener("click", function(){
+                                let list = document.createElement("ul");
+                                let li = that.createElAndAppend(list, "li");
+                                let a = that.createElAndAppend(li, "a");
+                                const icon = that.headerIconRender("logout", "", "span");
+                                icon.classList.add("iac-ui-header-action");
+                                a.appendChild(icon);
+                                let item = that.createElAndAppend(a, "span", "", "Logout");
+                                item.textContent = "Logout";
+                                item.setAttribute("lngcode", "Logout");    
+                                li.addEventListener("click", function () {
+                                    // UI.Log("logout")
+                                    UI.userlogin.logout();
+                                });
+                                
+                                let popup = UI.ContextPopup.createPopup(list);
+
+                                element.appendChild(popup.element);
+                               // UI.Log("select the notification,",list, popup)
+                                popup.open();
+
+                            })
                             this.headerUserimage.appendChild(element);
-                            let popup = UI.ContextPopup.createPopup(list);
-                            // UI.Log(popup)
-                            popup.attach(element);
                     }
                     else{
                         userelement.textContent = "Guest";
                         let element = that.headerIconRender("user","images/avatardefault.png");
                         element.classList.add("iac-ui-header-action");
                         element.classList.add("active");
-                        let list = document.createElement("ul");
-                        let li = that.createElAndAppend(list, "li");
-                        let a = that.createElAndAppend(li, "a");
-                        const icon = that.headerIconRender("login", "", "span");
-                        icon.classList.add("iac-ui-header-action");
-                        a.appendChild(icon);
-                        let item = that.createElAndAppend(a, "span", "", "Login");
-                        item.textContent = "Login";
-                        item.setAttribute("lngcode", "Login");    
-                        li.addEventListener("click", function () {
-                            
-                            window.location.href = UI.userlogin.loginurl;
-                        });
-                        this.headerUserimage.appendChild(element);
-                        let popup = UI.ContextPopup.createPopup(list);
-                        // UI.Log(popup)
-                        popup.attach(element);
+                        element.addEventListener("click", function(){
+                            let list = document.createElement("ul");
+                            let li = that.createElAndAppend(list, "li");
+                            let a = that.createElAndAppend(li, "a");
+                            const icon = that.headerIconRender("login", "", "span");
+                            icon.classList.add("iac-ui-header-action");
+                            a.appendChild(icon);
+                            let item = that.createElAndAppend(a, "span", "", "Login");
+                            item.textContent = "Login";
+                            item.setAttribute("lngcode", "Login");    
+                            li.addEventListener("click", function () {
+                                
+                                window.location.href = UI.userlogin.loginurl;
+                            });
+                            this.headerUserimage.appendChild(element);
+                            let popup = UI.ContextPopup.createPopup(list);
+                            // UI.Log(popup)
+                            element.appendChild(popup.element);
+                            //UI.Log("select the notification,",list, popup)
+                            popup.open();
+                        })
                     }
                 //    return element;
 

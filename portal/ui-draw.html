@@ -1,42 +1,56 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Excalidraw in browser</title>
-    <meta charset="UTF-8" />
-    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save Form Data with form-js</title>
+  <!-- Include the bpmn.io and form-js libraries -->
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@8.0.0/dist/assets/diagram-js.css">
+  <link rel="stylesheet" href="https://unpkg.com/form-js@4.0.2/dist/assets/form-js.css">
+</head>
+<body>
 
-    <script
-      type="text/javascript"
-      src="https://unpkg.com/@excalidraw/excalidraw/dist/excalidraw.development.js"
-    ></script>
-  </head>
+<div id="form-container"></div>
 
-  <body>
-    <div class="container">
-      <h1>Excalidraw Embed Example</h1>
-      <div id="app"></div>
-    </div>
-    <script type="text/javascript" src="src/index.js"></script>
-    <script>
-      const App = () => {
-        return React.createElement(
-          React.Fragment,
-          null,
-          React.createElement(
-            "div",
-            {
-              style: { height: "500px" },
-            },
-            React.createElement(ExcalidrawLib.Excalidraw),
-          ),
-        );
-      };
+<button id="save-button">Save Form</button>
 
-      const excalidrawWrapper = document.getElementById("app");
-      const root = ReactDOM.createRoot(excalidrawWrapper);
-      root.render(React.createElement(App));
-    </script>
+<script src="https://unpkg.com/bpmn-js@8.0.0/dist/bpmn-modeler.production.min.js"></script>
+<script src="https://unpkg.com/form-js@4.0.2/dist/form-js.production.min.js"></script>
+<script>
+  // Initialize form-js
+  var formContainer = document.getElementById('form-container');
+  var formBuilder = new Formio.FormBuilder(formContainer);
 
-  </body>
+  // Sample form data
+  var formData = {
+    components: [
+      {
+        type: 'textfield',
+        key: 'firstName',
+        label: 'First Name',
+        input: true
+      },
+      {
+        type: 'textfield',
+        key: 'lastName',
+        label: 'Last Name',
+        input: true
+      }
+      // Add more form components as needed
+    ]
+  };
+
+  // Set form data
+  formBuilder.instance.form = formData;
+
+  // Save button event
+  var saveButton = document.getElementById('save-button');
+  saveButton.addEventListener('click', function() {
+    var savedFormData = formBuilder.instance.schema;
+    console.log('Saved Form Data:', savedFormData);
+    // You can send the savedFormData to your server or handle it as needed
+  });
+</script>
+
+</body>
 </html>

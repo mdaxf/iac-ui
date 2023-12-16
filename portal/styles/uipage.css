@@ -30935,6 +30935,11 @@ span.k-widget.iac-ui-ctdatetime > span.k-picker-wrap.iac-ui-groupsolid > *[disab
           justify-content: flex-end;
 }
 
+.iac-ui-page-header .iac-ui-page-header-right img{
+  width:26px;
+  height:26px;
+}
+
 .iac-ui-page-header .iac-ui-page-header-right > * {
   margin: auto 0 auto 14px;
   text-overflow: ellipsis;
@@ -30942,6 +30947,96 @@ span.k-widget.iac-ui-ctdatetime > span.k-picker-wrap.iac-ui-groupsolid > *[disab
   -webkit-flex: 0 0 auto;
       -ms-flex: 0 0 auto;
           flex: 0 0 auto;
+}
+
+.iac-ui-header-notification-div {
+  position: relative;
+  display: inline-block;
+}
+
+.iac-ui-header-notification-count {
+background-color: #ef8002;
+    padding: 1px 3px;
+    font-family: sans-serif;
+    font-weight: 700;
+    position: absolute;
+    z-index: 10;
+    border-radius: 8px;
+    top: -5px;
+    right: -5px;
+    height: 16px;
+    min-width: 16px;
+    font-size: 10px;
+    color: #fff;
+    cursor: pointer;
+    line-height: 12px;
+    padding: 1px 3px;
+    text-align: center;
+}
+
+
+.iac-ui-header-notification-chatbox{
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  width: 430px;
+  bottom: 5px;
+  height: auto;
+  margin: 5px 5px 5px 5px;
+}
+
+.iac-ui-header-notification-chatbox-receipts-container{
+  min-height: 38px;
+  font-size: 14px;
+  display: flex ;
+  display: -webkit-flex ;
+  flex-direction: row ;
+  -webkit-flex-direction: row ;
+  flex-wrap: wrap important;
+  -webkit-flex-wrap: wrap;
+  flex-shrink: 0 ;
+  border-radius: 4px;
+  background-color: #FFF;
+  border: 1px solid #B4B6BA;
+  min-height: 26px;
+  font-size: 12px;
+}
+
+.iac-ui-chatbox-receipters-token {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  display: flex ;
+  display: -webkit-flex ;
+  flex-direction: row ;
+  -webkit-flex-direction: row ;
+  flex: 0 1 auto ;
+  -webkit-flex: 0 1 auto ;
+  align-items: center ;
+  border-radius: 2px;
+  background-color: #F1F1F1;
+  border: 1px solid #D1D4D4;
+  margin: 1px 2px 1px 0;
+ }
+
+.iac-ui-chatbox-receipters-token-value {
+  margin-left: 5px;
+  flex-grow: 1;
+  -webkit-flex-grow: 1;
+  color: black;
+}
+
+.iac-ui-chatbox-receipters-remove-token {
+   display: flex;
+    display: -webkit-flex;
+    flex: 0 1 auto;
+    -webkit-flex: 0 1 auto;
+    margin-left: 2px;
+    padding: 4px;
+    color: #B4B6BA;
 }
 
 .iac-ui-page-header .iac-ui-page-header-right .iac-ui-header-actions {

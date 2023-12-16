@@ -42123,20 +42123,25 @@
 
   const type$e = 'button';
   function Button(props) {
-    const {
+    const {      
       disabled,
       onFocus,
       onBlur,
       field
     } = props;
     const {
+      id,
       action = 'submit'
     } = field;
+    const {
+      formId
+    } = F(FormContext$1);
     return e$2("div", {
       class: formFieldClasses(type$e),
       children: e$2("button", {
         class: "fjs-button",
         type: action,
+        fieldid: id,
         disabled: disabled,
         onFocus: () => onFocus && onFocus(),
         onBlur: () => onBlur && onBlur(),
@@ -43948,12 +43953,12 @@
     return e$2("svg", {
       xmlns: "http://www.w3.org/2000/svg",
       viewBox: "0 0 14.02 5.57",
-      width: "53",
-      height: "21",
+      width: "0",
+      height: "0",
       style: "vertical-align:middle",
       children: [e$2("path", {
         fill: "currentColor",
-        d: "M1.88.92v.14c0 .41-.13.68-.4.8.33.14.46.44.46.86v.33c0 .61-.33.95-.95.95H0V0h.95c.65 0 .93.3.93.92zM.63.57v1.06h.24c.24 0 .38-.1.38-.43V.98c0-.28-.1-.4-.32-.4zm0 1.63v1.22h.36c.2 0 .32-.1.32-.39v-.35c0-.37-.12-.48-.4-.48H.63zM4.18.99v.52c0 .64-.31.98-.94.98h-.3V4h-.62V0h.92c.63 0 .94.35.94.99zM2.94.57v1.35h.3c.2 0 .3-.09.3-.37v-.6c0-.29-.1-.38-.3-.38h-.3zm2.89 2.27L6.25 0h.88v4h-.6V1.12L6.1 3.99h-.6l-.46-2.82v2.82h-.55V0h.87zM8.14 1.1V4h-.56V0h.79L9 2.4V0h.56v4h-.64zm2.49 2.29v.6h-.6v-.6zM12.12 1c0-.63.33-1 .95-1 .61 0 .95.37.95 1v2.04c0 .64-.34 1-.95 1-.62 0-.95-.37-.95-1zm.62 2.08c0 .28.13.39.33.39s.32-.1.32-.4V.98c0-.29-.12-.4-.32-.4s-.33.11-.33.4z"
+        d: "M2185 1349 c-627 -30 -1212 -155 -1674 -358 -162 -72 -491 -273 -491 -301 0 -4 60 -7 133 -7 82 1 153 -3 187 -12 76 -18 187 -73 237 -116 108 -92 179 -260 192 -449 l6 -89 48 87 c205 376 671 703 1267 889 530 165 1109 235 1863 225 185 -3 337 -1 337 3 0 5 -5 9 -10 9 -9 0 -111 14 -350 50 -127 18 -619 60 -835 70 -249 11 -657 11 -910 -1z"
       }), e$2("path", {
         fill: "currentColor",
         d: "M0 4.53h14.02v1.04H0zM11.08 0h.63v.62h-.63zm.63 4V1h-.63v2.98z"
@@ -44043,11 +44048,14 @@
       onReset = noop,
       onChange = noop
     } = props;
+    var formevent = null;
     const handleSubmit = event => {
+      formevent = event
       event.preventDefault();
       onSubmit();
     };
     const handleReset = event => {
+      formevent = event
       event.preventDefault();
       onReset();
     };
@@ -44057,6 +44065,7 @@
       onReset: handleReset,
       "aria-label": ariaLabel,
       noValidate: true,
+      formevent: formevent,
       children: [e$2(FormField, {
         field: schema,
         onChange: onChange
@@ -48427,9 +48436,11 @@
       }
       const data = this._getSubmitData();
       const errors = this.validate();
+      const formevent = this.formevent
       const result = {
         data,
-        errors
+        errors,
+        formevent
       };
       this._emit('submit', result);
       return result;
