@@ -216,6 +216,7 @@ var IACMessageClient = function (server = ""){
             })
 
         }
+    
 //    }
 //    _client.init();
 //    _client.connection.start()
@@ -578,6 +579,30 @@ var UI;
                 else if(chatlist){
                     Session.CurrentPage.pageheader.addchatitem(history, chatlist);
                     chatlist.scrollTop = chatlist.scrollHeight;
+                }
+
+                if(notification.status < 4){
+                    if(updatedby != UI.login.username){
+                        let notificationBadge = document.getElementById("iac-ui-header-notification-count")
+                        let count  = notificationBadge.getAttribute("data-count")
+                        
+                        if(count == null || count == undefined || count == "")
+                            count = 0;
+                        else 
+                            count = parseInt(count);
+
+                        count = count +1;
+
+                        if(count > 0){
+                            notificationBadge.setAttribute("data-count", count);
+                            notificationBadge.innerText = count;
+                            notificationBadge.style.display = "block";
+                        }else{
+                            notificationBadge.setAttribute("data-count", "0");
+                            notificationBadge.innerText = "0";
+                            notificationBadge.style.display = "none";
+                        }
+                    }
                 }
                 
             })
@@ -2117,15 +2142,19 @@ function rAFThrottle(func) {
                 let panel = panels[i]
                 UI.Log(panels, panel, panelname,viewname)
                 if(panel.name == panelname){
-                    if(panel.hasOwnProperty("panelviews")){
-                        for(var j=0; j<panel.panelviews.length;j++){
+                    UI.Log(panel, panel.configuration)
+                    if(panel.configuration.hasOwnProperty("view")){
+                        if(panel.configuration.view.name == viewname)
+                            return panel.configuration.view;
+                    }else if(panel.hasOwnProperty("panelviews")){
+                        for(var j=0; j<panel.configuration.panelviews.length;j++){
 
-                            if(panel.panelviews[j].name == viewname)
-                                return panel.panelviews[j];
+                            if(panel.configuration.panelviews[j].name == viewname)
+                                return panel.configuration.panelviews[j];
                         }
                         return {"name": viewname}                    
                     }
-                    return {"name": viewname}
+                //    return {"name": viewname}
                 }else if(panel.hasOwnProperty("panels")){
                     if(panel.panels.length > 0){
                         let view =  that.getpagepanelviewcfg(panel.panels,panelname, viewname)            
@@ -2148,11 +2177,17 @@ function rAFThrottle(func) {
             this.clear();
             let panelview = this.getpagepanelviewcfg(Session.CurrentPage.panels,this.name, view);
             this.panelviewcfg = panelview
+
+            if(panelview != null){
+                this.configuration.view = panelview;
+                this.displayview();
+            } else {
             this.configuration.view = {
                "name": view,
                "type": "document"
             };
             this.displayview();
+            }
         }
         displayview(){
             if(this.configuration.view){
@@ -2403,13 +2438,13 @@ function rAFThrottle(func) {
         }
         async loadviewconfiguration(configuration){
             
-            if(configuration.config in Session.fileResponsitory){
+          /*  if(configuration.config in Session.fileResponsitory){
                 this.configuration = JSON.parse(Session.fileResponsitory[configuration.config]);
                 this.configuration = Object.assign({}, this.configuration, configuration); 
             
                 this.builview(); 
                 return;                
-            }
+            }  */
 
 
             let ajax = new UI.Ajax(""); 
@@ -2802,16 +2837,26 @@ function rAFThrottle(func) {
             }
         }
         executeactionchain(){
-            UI.Log(this.configuration.actions[this.outputs.action])
+            let that = this;
+            let chaintime = 0 ;
+            UI.Log(this.configuration.actions[Session.snapshoot.sessionData.action])
             if(Session.snapshoot.sessionData.action){
-                UI.Log(this.configuration.actions[this.outputs.action])
-                    if(this.configuration.actions[this.outputs.action]){
-                        var action = this.configuration.actions[this.outputs.action];
-                        UI.Log("selected action:",this.outputs.action,action,action.type)
+                UI.Log(this.configuration.actions[Session.snapshoot.sessionData.action])
+                    if(this.configuration.actions[Session.snapshoot.sessionData.action]){
+                        var action = this.configuration.actions[Session.snapshoot.sessionData.action];
+                        UI.Log("selected action:",Session.snapshoot.sessionData.action,action,action.type)
                         Session.snapshoot.sessionData.action ="";
+                                                
                         if(action.type == "Transaction"){
                             if(action.code !="" && action.code){
-                                this.executeTransaction(action.code, Session.snapshoot.sessionData, this.updateoutputs, function(error){ UI.ShowError(error)});
+                                this.executeTransaction(action.code, Session.snapshoot.sessionData, function(response){
+                                    //   UI.Log("load data success:", response);
+                                       let responsedata = JSON.parse(response);
+                                      // Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, responsedata.Outputs);
+                                       
+                                       that.updateoutputs(responsedata.Outputs)
+                                },
+                                    function(error){ UI.ShowError(error)});
                             }
                             if(Session.snapshoot.sessionData.action !="")
                                 this.executeactionchain();
@@ -2864,6 +2909,11 @@ function rAFThrottle(func) {
                                 }
 
                             }
+                            if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }   
+
                         }                    
                         else if(action.type == "page"){
                             
@@ -2885,13 +2935,22 @@ function rAFThrottle(func) {
                                 new Page({"name":action.page});    
                         }
                         else if(action.type == "script"){
-                            if(action.script){
-                                action.script(Session.snapshoot.sessionData);
-                            }
+                            /*if(action.script){
+                                let dynamicFunction = new Function(action.script)
+                                //action.script(Session.snapshoot.sessionData);
+                                dynamicFunction();
+                            } */
                         /*    if(action.next && action.next !=""){
                                 Session.snapshoot.sessionData.action = action.next;
                                 this.executeactionchain();          
                             }  */
+                            if(action.script){
+                                action.script(Session.snapshoot.sessionData);
+                            }
+                            if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }   
                         }else if(action.type == "popup"){
                             if(action.popupview){
                                 this.Panel.page.popupOpen(action.popupview);
@@ -2902,6 +2961,7 @@ function rAFThrottle(func) {
                                 Session.snapshoot.sessionData.action = action.next;
                                 this.executeactionchain();          
                             }  */
+                           
 
                         }else if(action.type == "close_popup" ){
                             this.Panel.page.popupClose();
@@ -2910,12 +2970,24 @@ function rAFThrottle(func) {
                                 Session.snapshoot.sessionData.action = action.next;
                                 this.executeactionchain();          
                             }   */
+                            if(action.next && action.next !=""){
+                                Session.snapshoot.sessionData.action = action.next;
+                                this.executeactionchain();          
+                            }   
                         }else if(action.type == "close_popup_refresh" ){
 
                             this.Panel.page.popupClose();
                             this.Panel.page.Refresh();
                         }
     
+                       /* if(action.type != "Script" && action.script && action.script !="" && chaintime == 0){
+                            if(action.script){
+                                let dynamicFunction = new Function(action.script)
+                                //action.script(Session.snapshoot.sessionData);
+                                dynamicFunction();
+                            }
+                            chaintime +=1;
+                        } */
                     }
     
             }  
@@ -3167,17 +3239,26 @@ function rAFThrottle(func) {
 
         }
         async init(){
+            let that = this;
             let id = 'page_'+UI.generateUUID();
             this.id = id;
-            
-            if(this.configuration.onInitialize){
+            UI.Log("Initialize", this.configuration.initcode,Session.snapshoot.sessionData)
+            if(this.configuration.initcode){
 
-                await this.executeTransaction(this.configuration.onInitialize,Session.snapshoot.sessionData , this.updatesession, function(error){
+                await this.executeTransaction(this.configuration.initcode,Session.snapshoot.sessionData , function(response){
+                    UI.Log("onInitialize:",response)
+                    let responsedata = JSON.parse(response);
+                  //  Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, responsedata.Outputs);
+                    that.updatesession(responsedata.Outputs)
+                }, function(error){
                     UI.ShowError(error)
                 });   
+                await this.create();
+            }else{
+                await this.create();
             }
             
-            let page = await this.create();
+            
         }
         async create(){
             let that = this;
@@ -3212,9 +3293,13 @@ function rAFThrottle(func) {
             }
             this.configuration.title = this.configuration.title || this.configuration.name || '';     
   
-            if(this.configuration.onLoad){
+            if(this.configuration.onloadcode){
 
-                await this.executeTransaction(this.configuration.onLoad,data,Session.snapshoot.sessionData, this.updatesession, function(error){
+                await this.executeTransaction(this.configuration.onloadcode,Session.snapshoot.sessionData, function(response){
+                    let responsedata = JSON.parse(response);
+                    //  Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, responsedata.Outputs);
+                      that.updatesession(responsedata.Outputs)
+                }, function(error){
                      UI.ShowError(error)
                 });   
             }
@@ -3696,7 +3781,8 @@ function rAFThrottle(func) {
                             let receiptobj = {}
                             let privatemessage = document.querySelector(".iac-ui-header-notification-chatbox-chekbox").checked;
                             for(var i=0;i<receipts.length;i++){
-                                receiptobj[receipts[i]] = 1;
+                                if(receipts[i].trim() != "")
+                                    receiptobj[receipts[i]] = 1;
                             }
                             if(receipts.length == 0 && !privatemessage)
                                 receiptobj ={
@@ -3941,34 +4027,57 @@ function rAFThrottle(func) {
                         chatmodeaction.textContent = "Chat Mode ->";
                         chatmodeaction.setAttribute("lngcode", "ChatMode");
 
-                        let closeaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-close");
-                        closeaction.textContent = "Close ->";
-                        closeaction.setAttribute("lngcode", "Close");
+                        if(notification.sender != UI.userlogin.username && notification.status < 3){
+                            let ackaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-close");
+                            ackaction.textContent = "Acknowledge ->";
+                            ackaction.setAttribute("lngcode", "Acknowledge");
+                            ackaction.addEventListener("click", function(event){
+                                event.stopPropagation();
+    
+                                let notificationdata = {
+                                    data: notification,
+                                    status:3,
+                                    comments: 'acknowledge notification'
+                                }
+                                UI.Post("/notification/response", notificationdata, function(response){
+                                    UI.Log("acknowledge notification:",response)
+    
+                                    if (!IACMessageBusClient)
+                                        IACMessageBusClient = new IACMessageClient();
+    
+                                        IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_CLOSE", notificationdata);
+    
+                                    }, function(error){
+                                        UI.ShowError(error)
+                                })
+                            })  
+                        }
+                        if(notification.status < 4){
+                            let closeaction = that.createElAndAppend(itemaction, "a", "iac-ui-notification-action-close");
+                            closeaction.textContent = "Close ->";
+                            closeaction.setAttribute("lngcode", "Close");
 
-                        closeaction.addEventListener("click", function(event){
-                            event.stopPropagation();
-                        //    let key = event.target.parentElement.parentElement.parentElement.datakey;                                
-                            
-                        //    UI.Notifications.removeItem(key);
-                            let notificationdata = {
-                                data: notification,
-                                status:4,
-                                comments: 'close notification'
-                            }
-                            UI.Post("/notification/response", notificationdata, function(response){
-                                UI.Log("close notification:",response)
+                            closeaction.addEventListener("click", function(event){
+                                event.stopPropagation();
+                                let notificationdata = {
+                                    data: notification,
+                                    status:4,
+                                    comments: 'close notification'
+                                }
+                                UI.Post("/notification/response", notificationdata, function(response){
+                                    UI.Log("close notification:",response)
+                                    
+                                    if (!IACMessageBusClient)
+                                        IACMessageBusClient = new IACMessageClient();
 
-                            //    event.target.parentElement.parentElement.parentElement.remove();
-                                
-                                if (!IACMessageBusClient)
-                                    IACMessageBusClient = new IACMessageClient();
+                                    IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_CLOSE", notificationdata);
 
-                                IACMessageBusClient.Publish("IAC_SYSTEM_NOTIICATION_CLOSE", notificationdata);
-
-                            }, function(error){
-                                UI.ShowError(error)
+                                }, function(error){
+                                    UI.ShowError(error)
+                                })
                             })
-                        })
+                          
+                        }
                      //   item.textContent = notification.topic;    
                      //   let content = that.createElAndAppend(li, "span", "", notification.message);                        
                        // content.textContent = notification.message;

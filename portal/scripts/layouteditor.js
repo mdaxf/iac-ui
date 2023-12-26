@@ -1270,7 +1270,9 @@ var LayoutEditor = {
               {attrs:{value: 'page', innerHTML: 'Page',lngcode: 'Page'}},
               {attrs:{value: 'script', innerHTML: 'Script',lngcode: 'Script'}}, 
               {attrs:{value: 'view', innerHTML: 'View',lngcode: 'View'}},
-              {attrs:{value: 'popup', innerHTML: 'Popup',lngcode: 'Popup'}}
+              {attrs:{value: 'popup', innerHTML: 'Popup',lngcode: 'Popup'}},
+              {attrs:{value: 'close_popup', innerHTML: 'Close Popup',lngcode: 'Close Popup'}},
+              {attrs:{value: 'close_popup_refresh', innerHTML: 'Close Popup & Refresh',lngcode: 'Close Popup Refresh'}},
             ],
           }
           let events = {
@@ -1409,17 +1411,17 @@ var LayoutEditor = {
               let type = $('#type').val();
               let next = $('#next').val();
               let page = $('#actionpage').val();
-              let script = $('#script').val();
+              let scriptval = $('#script').val();
               let view = $('#view').val();
               let trancode = $('#trancode').val();
-              UI.Log(type, next, page, script, view)
+              UI.Log(type, next, page, scriptval, view)
               action.type = type;
               action.next = next;
               action.page = page;
               action.sequence = $('#sequence').val();
               action.displaytype = $('#displaytype').val();
               action.defaultaction = $('#defaultaction').val();
-              action.script = script;
+              action.script = scriptval;
               action.popupview = $('#actionpopup').val();
               if(type == 'view'){
                 let table = document.getElementById("action_view_table");

@@ -36,7 +36,7 @@ rect[joint-selector="FunctioninputRect"]{
 }
 
 .uiflow_process_flow_menubar_container_menubar{
-	display: inline-block;
+	display: inline-flex;
 	font-size: 28px;
 	width: 35px;
 	height: 65px;
@@ -44,6 +44,8 @@ rect[joint-selector="FunctioninputRect"]{
 	margin-bottom:5px;
 	margin-left: 1px;
 	color: #8f8d8d;
+	flex-direction: column;
+    align-items: center;
 /*	border: 1px solid white;  */
 }
 
@@ -58,7 +60,28 @@ rect[joint-selector="FunctioninputRect"]{
     color: #8f8d8d;
 }
 
+.ui_flow_element_resize-tool {
+	width: 10px;
+	height: 10px;
+	background-color: #333;
+	cursor: nwse-resize;
+	position: absolute;
+  }
 
+
+  .ui_flow_element_text-input {
+	position: absolute;
+	display: none;
+	border: 1px solid #333;
+	padding: 5px;
+	background-color: white;
+	z-index: 1000;
+  }
+
+.uiflow_process_flow_menubar_container_menubar.selected{
+	background-color: #004D78;
+	color: #fff;
+}
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_Repository:before{
 	content: '\f1c0'; 
@@ -69,14 +92,14 @@ rect[joint-selector="FunctioninputRect"]{
 }
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_Save:before{
-	content: '\f35b'; 
+	content: '\f1c0'; 
 }
 .uiflow_process_flow_menubar_container .uiflow_menubar_Tree:before{
 	content: '\f802'; 
 }
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_Saveas:before{
-	content: '\f15b'; 
+	content: '\f233'; 
 }
 
 
@@ -109,6 +132,30 @@ rect[joint-selector="FunctioninputRect"]{
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_Parameters:before{
 	content: '\f145'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_select:before{
+	content: '\f245'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_task:before{
+	content: '\f0c8'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_start:before{
+	content: '\f111'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_end:before{
+	content: '\f28d'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_gateway:before{
+	content: '\f5eb'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_notes:before{
+	content: '\f27a'; 
 }
 
 .uiflow_process_flow_toolbar_container{

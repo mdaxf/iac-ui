@@ -1,0 +1,114 @@
+<head>
+    <title>Business Logic Editor</title>
+    <meta name="description" content="start">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <script src="scripts/jquery.min.js" type="text/javascript" ></script>
+    <script src="scripts/uiform.js" type="text/javascript" ></script>
+    <script src="scripts/uiframework.js" type="text/javascript" ></script>
+    <script src="scripts/jsonmanager.js" type="text/javascript"></script>
+    <script src="scripts/flow/UIworkflow.js" type="text/javascript" ></script>
+    <link rel="stylesheet" type="text/css" href="styles/flow/joint.css">
+    <link rel="stylesheet" type="text/css" href="styles/flow/UIFlow.css">
+    <link rel="stylesheet" type="text/css" href="styles/contextmenu/jquery.contextMenu.css">
+    <link rel="stylesheet" href="styles/fontawesome/css/all.min.css" />
+    <link rel="stylesheet" href="Scripts/codemirror5/addon/merge/merge.css">
+    <link rel="stylesheet" href="styles/jstree/jstree.css" />
+    <link rel="stylesheet" href="styles/jquery-ui.css">
+    <style>
+        body {
+          margin: 0;
+          overflow: hidden;
+        }
+        #paper {
+          width: 100vw;
+          height: 100vh;
+          position: relative;
+        }
+        .ui_flow_element_resize-tool {
+            width: 10px;
+            height: 10px;
+            background-color: #333;
+            cursor: nwse-resize;
+            position: absolute;
+            z-index: 99;
+        }
+      </style>
+</head>
+
+<body>
+    <div id="workflow" style="width:100%;height:100%;"></div>
+    <script>
+        var workflowobj = {
+            "name": "test",
+            "id": "test",
+            "type": "workflow",
+            "nodes": [
+                {
+                    "id": "1",
+                    "name": "start",
+                    "type": "start",
+                    "width": 50,
+                    "height": 50,
+                    "x": 100,
+                    "y": 100,
+                },
+                {
+                    "id": "2",
+                    "name": "end",
+                    "type": "end",
+                    "width": 50,
+                    "height": 50,
+                    "x": 600,
+                    "y": 400,
+                },
+                {
+                    "id": "3",
+                    "name": "task",
+                    "type": "task",
+                    "width": 100,
+                    "height": 50,
+                    "x": 200,
+                    "y": 200,
+                },
+                {
+                    "id": "4",
+                    "name": "gateway",
+                    "type": "gateway",
+                    "width": 100,
+                    "height": 50,
+                    "x": 400,
+                    "y": 200,
+                }
+            ],
+            "links": [
+                {
+                    "id": "1",
+                    "name": "link1",
+                    "type": "link",
+                    "source": 1,
+                    "target": 3,
+                },
+                {
+                    "id": "2",
+                    "name": "link2",
+                    "type": "link",
+                    "source": 3,
+                    "target": 4,
+                },
+                {
+                    "id": "3",
+                    "name": "link3",
+                    "type": "link",
+                    "source": 4,
+                    "target": 2,
+                }
+            ]
+        }
+        var workflow = new WorkFlow('workflow',{},{}, true);
+
+
+    </script>
+
+</body>

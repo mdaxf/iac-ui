@@ -1,0 +1,326 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/WorkFlow",
+    "datasourcetype": "collection",
+    "datasource": "WorkFlow",
+    "listfields": [
+        "name",
+        "version",
+        "isdefault",
+        "status",
+        "type",
+        "class",
+        "system.createdby",
+        "system.createdon",
+        "workspace",
+        "_id"
+    ],
+    "keyfield": "_id",
+    "definitions": {
+        "WorkFlow": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "_id": {
+                    "type": "string",
+                    "lng": {
+                        "code": "DB_ID",
+                        "default": "ID"
+                    }
+                },
+                "uuid": {
+                    "type": "string",
+                    "lng": {
+                        "code": "UUID",
+                        "default": "UUID"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Name",
+                        "default": "Name"
+                    }
+                },
+                "version": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Version",
+                        "default": "Version"
+                    }
+                },
+                "isdefault": {
+                    "type": "boolean",
+                    "lng": {
+                        "code": "IsDefault",
+                        "default": "is Default?"
+                    }
+                },
+                "status": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Status",
+                        "default": "Status"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Description",
+                        "default": "Description"
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Type",
+                        "default": "Type"
+                    }
+                },
+                "class": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Class",
+                        "default": "Class"
+                    }
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Node"
+                    },
+                    "lng": {
+                        "code": "Styles",
+                        "default": "Styles"
+                    }
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Link"
+                    },
+                    "lng": {
+                        "code": "Links",
+                        "default": "Links"
+                    }
+                },
+                "system": {
+                    "$ref": "#/definitions/System",
+                    "lng": {
+                        "code": "System",
+                        "default": "System"
+                    }
+                },
+                "workspace": {
+                    "type": "object",
+                    "lng": {
+                        "code": "WorkSpaces",
+                        "default": "WorkSpaces"
+                    }
+                }
+            },
+            "required": [
+                "uuid",
+                "isdefault",
+                "name",
+                "nodes",
+                "links",
+                "system",
+                "version",
+                "workspace"
+            ],
+            "unchangable": [
+                "_id",
+                "uuid",
+                "name"
+            ],
+            "hidden": [
+                "_id"
+            ],
+            "title": "WorkFlow"
+        },
+        "Node": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Name",
+                        "default": "Name"
+                    }
+                },
+                "id": {
+                    "type": "string",
+                    "lng": {
+                        "code": "ID",
+                        "default": "ID"
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Type",
+                        "default": "Type"
+                    }
+                },
+                "description": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Description",
+                        "default": "Description"
+                    }
+                },
+                "roles": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Roles",
+                        "default": "Roles"
+                    }
+                },
+                "users": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Users",
+                        "default": "Users"
+                    }
+                },
+                "page": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Page",
+                        "default": "Page"
+                    }
+                },
+                "trancode": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Trancode",
+                        "default": "Trancode"
+                    }
+                },
+                "precondition": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Precondition",
+                        "default": "Pre Condition"
+                    }
+                },
+                "processdata": {
+                    "type": "string",
+                    "lng": {
+                        "code": "PorcessData",
+                        "default": "Process Data"
+                    }
+                },
+                "postcondition": {
+                    "type": "string",
+                    "lng": {
+                        "code": "PostCondition",
+                        "default": "Post Condition"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "type"
+            ],
+            "title": "Node"
+        },
+        "Link": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Name",
+                        "default": "Name"
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Type",
+                        "default": "Type"
+                    }
+                },
+                "source": {
+                    "type": "string",
+                    "lng": {
+                        "code": "source",
+                        "default": "Source Node"
+                    }
+                },
+                "target": {
+                    "type": "string",
+                    "lng": {
+                        "code": "target",
+                        "default": "Target Node"
+                    }
+                },
+                "id": {
+                    "type": "string",
+                    "lng": {
+                        "code": "ID",
+                        "default": "ID"
+                    }
+                },
+                "label": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Label",
+                        "default": "Label"
+                    }
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "title": "link"
+        },
+        "System": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "createdby": {
+                    "type": "string",
+                    "lng": {
+                        "code": "CreatedBy",
+                        "default": "Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "CreatedOn",
+                        "default": "Created On"
+                    }
+                },
+                "updatedby": {
+                    "type": "string",
+                    "lng": {
+                        "code": "UpdatedBy",
+                        "default": "Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "UpdatedOn",
+                        "default": "Updated On"
+                    }
+                }
+            },
+            "required": [
+                "createdby",
+                "createdon"
+            ],
+            "unchangable": [],
+            "hidden": [],
+            "title": "System"
+        }
+    }
+}

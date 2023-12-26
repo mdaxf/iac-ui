@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drag and Drop Resize Tool in JointJS</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #paper {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    .resize-tool {
+      width: 10px;
+      height: 10px;
+      background-color: #333;
+      cursor: nwse-resize;
+      position: absolute;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jointjs/3.7.0/joint.min.js"></script>
+</head>
+<body>
+  <div id="paper"></div>
+
+  <script>
+    $(document).ready(function() {
+      // Create paper
+      var paper = new joint.dia.Paper({
+        el: $('#paper'),
+        width: '100%',
+        height: '100%',
+        model: new joint.dia.Graph(),
+        gridSize: 10
+      });
+
+      // Enable link snapping
+      paper.options.linkConnectionPoint = joint.util.shapePerimeterConnectionPoint;
+
+      // Add elements to the graph
+      var rect1 = new joint.shapes.standard.Rectangle({
+        position: { x: 100, y: 100 },
+        size: { width: 100, height: 60 },
+        attrs: { rect: { fill: 'lightblue' } }
+      });
+
+      var rect2 = new joint.shapes.standard.Rectangle({
+        position: { x: 250, y: 150 },
+        size: { width: 120, height: 80 },
+        attrs: { rect: { fill: 'lightgreen' } }
+      });
+
+      paper.model.addCells([rect1, rect2]);
+
+      // Create resize tools for each element
+      var createResizeTool = function(element) {
+        var resizeTool = $('<div class="resize-tool"></div>').appendTo('#paper').hide();
+
+        // Variables to store dragging information
+        var isResizing = false;
+        var startSize, startPosition;
+
+        // Event listener for element pointerdown
+        element.on('pointerdown', function(cellView, evt, x, y) {
+          // Show the resize tool when an element is selected
+          resizeTool.show();
+
+          // Move the resize tool to the bottom-right corner of the selected element
+          var bbox = element.getBBox();
+          var bottomRightX = bbox.x + bbox.width;
+          var bottomRightY = bbox.y + bbox.height;
+          resizeTool.css({ left: bottomRightX, top: bottomRightY });
+
+          // Start resizing
+          isResizing = true;
+          startSize = { width: bbox.width, height: bbox.height };
+          startPosition = { x: x, y: y };
+        });
+
+        // Event listener for element pointermove
+        element.on('pointermove', function(cellView, evt, x, y) {
+          if (isResizing) {
+            // Calculate the new size based on the pointer movement
+            var newSize = {
+              width: startSize.width + (x - startPosition.x),
+              height: startSize.height + (y - startPosition.y)
+            };
+
+            // Set the new size for the element
+            element.resize(newSize.width, newSize.height);
+
+            // Move the resize tool to the bottom-right corner of the resized element
+            var bbox = element.getBBox();
+            var bottomRightX = bbox.x + bbox.width;
+            var bottomRightY = bbox.y + bbox.height;
+            resizeTool.css({ left: bottomRightX, top: bottomRightY });
+          }
+        });
+
+        // Event listener for document pointerup to stop resizing
+        $(document).on('pointerup', function() {
+          isResizing = false;
+
+          // Hide the resize tool when resizing is complete
+          resizeTool.hide();
+        });
+
+        // Enable dragging for the resize tool
+        resizeTool.on('mousedown', function(evt) {
+          var offset = resizeTool.offset();
+          var startX = evt.clientX - offset.left;
+          var startY = evt.clientY - offset.top;
+
+          $(document).on('mousemove', function(evt) {
+            var newX = evt.clientX - startX;
+            var newY = evt.clientY - startY;
+
+            // Update the position of the resize tool
+            resizeTool.css({ left: newX, top: newY });
+
+            // Update the size of the element based on the resize tool position
+            var newWidth = newX - element.position().x;
+            var newHeight = newY - element.position().y;
+            element.resize(newWidth, newHeight);
+          });
+
+          $(document).on('mouseup', function() {
+            // Stop dragging
+            $(document).off('mousemove');
+            $(document).off('mouseup');
+          });
+        });
+      };
+
+      // Create resize tools for each element
+      createResizeTool(rect1);
+      createResizeTool(rect2);
+    });
+  </script>
+</body>
+</html>

@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*'use strict';
-function _0x30f6(_0x180a7f,_0x5d5a98){var _0x42049c=_0x4204();return _0x30f6=function(_0x30f6b3,_0x100ba6){_0x30f6b3=_0x30f6b3-0x122;var _0x115fb4=_0x42049c[_0x30f6b3];return _0x115fb4;},_0x30f6(_0x180a7f,_0x5d5a98);}(function(_0x48010b,_0x19cbdd){var _0x36ee8e=_0x30f6,_0x5a0168=_0x48010b();while(!![]){try{var _0x3f1e92=parseInt(_0x36ee8e(0x132))/0x1*(-parseInt(_0x36ee8e(0x129))/0x2)+-parseInt(_0x36ee8e(0x137))/0x3*(-parseInt(_0x36ee8e(0x123))/0x4)+parseInt(_0x36ee8e(0x124))/0x5*(parseInt(_0x36ee8e(0x133))/0x6)+-parseInt(_0x36ee8e(0x12b))/0x7+parseInt(_0x36ee8e(0x12d))/0x8+-parseInt(_0x36ee8e(0x131))/0x9+parseInt(_0x36ee8e(0x12c))/0xa;if(_0x3f1e92===_0x19cbdd)break;else _0x5a0168['push'](_0x5a0168['shift']());}catch(_0x122998){_0x5a0168['push'](_0x5a0168['shift']());}}}(_0x4204,0x65ee6),(!function(_0x52457c){var _0x3ce8ad=_0x30f6,_0x406208=[];_0x52457c[_0x3ce8ad(0x12a)](!0x0,{'import_js':function(_0x2f9a80){var _0x461c98=_0x3ce8ad;for(var _0x51c96c=!0x1,_0x401e12=0x0;_0x401e12<_0x406208['length'];_0x401e12++)if(_0x406208[_0x401e12]==_0x2f9a80){_0x51c96c=!0x0;break;}0x0==_0x51c96c&&(_0x52457c(_0x461c98(0x125))[_0x461c98(0x136)](_0x461c98(0x130)+_0x2f9a80+_0x461c98(0x128)),_0x406208[_0x461c98(0x126)](_0x2f9a80));}});}(jQuery),function(){var _0x4c4a55=_0x30f6,_0x5a2660=_0x4c4a55(0x122);$[_0x4c4a55(0x12e)](_0x5a2660+'D3.V5.0/d3.min.js'),$['import_js'](_0x5a2660+'/Dagre/dagre.min.js'),$[_0x4c4a55(0x12e)](_0x5a2660+_0x4c4a55(0x134)),$[_0x4c4a55(0x12e)](_0x5a2660+_0x4c4a55(0x135)),$[_0x4c4a55(0x12e)](_0x5a2660+_0x4c4a55(0x127)),$[_0x4c4a55(0x12e)](_0x5a2660+'svc/flow/joint.js'),$[_0x4c4a55(0x12e)](_0x5a2660+'svc/flow/svg-pan-zoom.js'),svclpmsolution&&null!=svclpmsolution||$[_0x4c4a55(0x12e)](_0x5a2660+_0x4c4a55(0x12f));}()));function _0x4204(){var _0x13bc01=['push','svc/flow/backbone.js','\x22></script>','6808rZxEEQ','extend','3812760FSSlEC','8344400jHosdv','1938152kVlFMa','import_js','svc/uiflow_lpm_core.min.js','<script\x20type=\x22text/javascript\x22\x20src=\x22','3178584BZjKoc','109zPxABb','6CsPHER','svc/flow/lodash.js','svc/flow/graphlib.js','append','3aBfUgA','/Apriso/Portal/scripts/','2145056BkbtWG','367145nohBuh','head'];_0x4204=function(){return _0x13bc01;};return _0x4204();}
-
-*/
 (function($)
 {
 
@@ -2483,17 +2479,17 @@ var ProcessFlow = (function(){
 		//	this.Paper.options.highlighting.magnetAvailability = magnetAvailabilityHighlighter;
 		}
 		
-		setup_Menubar(){
-			let menubars=[];
-			menubars.push({
-				type: 'Tree',
-				datakey: 'Tree',
-				description: 'Flow tree',
-				category: 'trancode'
-			})
-			menubars.push({
-				type: 'New',
-				datakey: 'New',
+			setup_Menubar(){
+				let menubars=[];
+				menubars.push({
+					type: 'Tree',
+					datakey: 'Tree',
+					description: 'Flow tree',
+					category: 'trancode'
+				})
+				menubars.push({
+					type: 'New',
+					datakey: 'New',
 				description: 'New',
 				category: 'trancode'
 			})
