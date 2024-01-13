@@ -18,6 +18,8 @@
       </div>
     </div>
     </div>
+    <div class="ui-login-page-content">
+    <div class="ui-login-left-content"><span id="iac_content_Logo"></span></div>
     <div id="flexBox" class="ui-login-body">     
       
         <div class="loginform-header">
@@ -45,7 +47,7 @@
           </div>
       </div>
     </div>
-
+    </div>
     <script>
         $(document).ready(function(){
           console.log("Logon page loaded")
@@ -55,6 +57,17 @@
           }, function(){
             localStorage.clear();
             console.log("not logged")
+          });
+
+          $('#password').keypress(function(e){
+            console.log(e.keyCode)
+            if(e.keyCode==13)
+              login();
+          });
+
+          $('#username').keypress(function(e){
+            if(e.keyCode==13)
+              login();
           });
         })
         function clear(){

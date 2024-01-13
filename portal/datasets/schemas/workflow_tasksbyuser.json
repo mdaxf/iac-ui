@@ -1,0 +1,181 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/WorkFlow_Tasks",
+    "datasourcetype": "table",
+    "datasource": "workflow_tasks",
+    "listfields":["Type","Description","WorkfflowEntityID", "Page", "TranCode", "Status", "StartedDate", "CompletedDate", "CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ID"],
+    "keyfield":"ID",
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+            "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 2,         
+                "fields": [
+                    "Name",  "Type",
+                    "Description", "dummy",          
+                    "active"
+                ]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        }
+    },    
+    "definitions": {
+        "WorkFlow_Tasks": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                
+                "Type": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Type",
+                        "default":"Type"
+                    } 
+                },
+                "Description": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Description",
+                        "default":"Description"
+                    } 
+                },  
+                "WorkfflowEntityID":{
+                    "type": "string",
+                    "lng":{
+                        "code": "WorkflowEntityId",
+                        "default":"WorkflowEntityId"
+                    }                   
+                },  
+                "WorkFlowNodeId":{
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng":{
+                        "code": "WorkFlowNodeId",
+                        "default":"WorkFlowNodeId"
+                    }                   
+                }, 
+                "Page":{
+                    "type": "string",
+                    "lng":{
+                        "code": "Page",
+                        "default":"Page"
+                    }                   
+                },  
+                "TranCode":{
+                    "type": "string",
+                    "lng":{
+                        "code": "TranCode",
+                        "default":"TranCode"
+                    }                   
+                },  
+                "Status": {
+                    "type": "integer",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Status",
+                        "default":"Status"
+                    }
+                }, 
+                "StartedDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "StartedDate",
+                        "default":"Started Date"
+                    }
+                },
+                "CompletedDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CompletedDate",
+                        "default":"Completed Date"
+                    }
+                },  
+                "NotificationUUID": {
+                    "type": "string",
+                    "lng":{
+                        "code": "NotificationUUID",
+                        "default":"Notification"
+                    }
+                }, 
+                "active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },               
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "Name",
+                "Code",
+                "Description"
+            ],
+            "unchangable": ["Name"],
+            "hidden": [],
+            
+            "title": "Factory Line"
+        }
+    }
+}

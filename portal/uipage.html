@@ -26,6 +26,8 @@
             const queryString = window.location.search;
             const urlParams = new URLSearchParams(queryString);
             const myParam = urlParams.get('page');
+            const mode = urlParams.get('mode');
+            const pagecfg = urlParams.get('cfg');
             let loginprocess = false;
             if(myParam == null || !myParam.endsWith("logon.json")){
                 
@@ -34,15 +36,26 @@
                     loginprocess = true;
 
                 }
-                else{                
+                else{ 
+                    console.log("logged in with user:", UI.userlogin.username)               
                     UI.userlogin.checkiflogin(function(){
-                        console.log("logged in with user:", UI.userlogin.username);
+                        console.log("checklogin : logged in with user:", UI.userlogin.username, myParam);
                         if (myParam != null) {
                             if(myParam.endsWith(".json"))
                                 UI.startpage('pages/'+myParam);
                             else
                                 new UI.Page({"name": myParam})
                             // UI.startpage('pages/'+myParam + ".json");
+                        }else if (mode == "debug"){
+                            window.addEventListener("message", iac_ui_page_handleparentmessage, false);
+                            /*
+                            try{                  
+                              //  JSON.stringify              
+                                configuration = JSON.parse(pagecfg)
+                                new UI.Page(configuration)
+                            }catch(e){
+                                UI.ShowError(e)
+                            } */
                         }
                         else
                           UI.startpage('pages/home.json');
@@ -59,8 +72,25 @@
             }else{
                 UI.userlogin.getNotification();
             }
-        });
 
+            
+        });
+        function iac_ui_page_handleparentmessage(event){
+                console.log(event)
+                if (event.data) {
+                    const message = event.data;
+                    if (message.type === 'pageconfiguration'){
+                        var configuration = message.data.cfg;
+                        var inputs = message.data.inputs;
+                        Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, inputs);
+                        UI.Log(configuration,inputs)
+                        new UI.Page(configuration)
+                    }
+                }
+        }
+        document.addEventListener("beforeunload", function(event) {
+            window.removeEventListener("message", iac_ui_page_handleparentmessage);
+        }, false);
     </script>
 <head>
 <body>

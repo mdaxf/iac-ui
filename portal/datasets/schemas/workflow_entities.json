@@ -1,0 +1,150 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/WorkFlow_Entity",
+    "datasourcetype": "table",
+    "datasource": "workflow_entities",
+    "listfields":["Type","Description", "Entity", "Status", "WorkFlowUUID","CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ID"],
+    "keyfield":"ID",
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+            "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 2,         
+                "fields": [
+                    "Type",  "Entity",
+                    "Description", "dummy", 
+                    "Status", "dummy",
+                    "WorkFlowUUID", "dummy",              
+                    "active"
+                ]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        }
+    },    
+    "definitions": {
+        "WorkFlow_Entity": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                
+                "ID": {
+                    "type": "integer",                   
+                    "lng":{
+                        "code": "DB_ID",
+                        "default":"ID"
+                    } 
+                },
+                "Type": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Name",
+                        "default":"Name"
+                    } 
+                },
+                "Entity": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Entity",
+                        "default":"Entity"
+                    } 
+                },
+                "Description": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Description",
+                        "default":"Description"
+                    } 
+                },  
+                "Status":{
+                    "type": "integer",
+                    "lng":{
+                        "code": "Status",
+                        "default":"Status"
+                    }                   
+                },  
+                "WorkFlowUUID":{
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng":{
+                        "code": "WorkFlowUUID",
+                        "default":"Work flow UUID"
+                    }                   
+                },   
+                "active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },               
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "Entity",
+                "WorkFlowUUID",
+                "Description"
+            ],
+            "unchangable": ["ID", "Entity"],
+            "hidden": [],
+            
+            "title": "WorkFlow Entity"
+        }
+    }
+}

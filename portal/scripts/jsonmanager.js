@@ -1564,8 +1564,8 @@ var UI = UI || {};
                     }
                     UI.Log(url,inputdata)
                     UI.ajax.post(url,inputdata).then((response) => {
-                        data = JSON.parse(response); 
-                        Session.CurrentPage.panels[0].view.fireOnLoaded();
+                    //    data = JSON.parse(response); 
+                    //    Session.CurrentPage.panels[0].view.fireOnLoaded();
                     }).catch((error) => {
                         UI.ShowError(error);
                     });

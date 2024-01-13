@@ -733,8 +733,21 @@ const Function_Source_Color_List = ['#82CD47', '#6DA9E4', '#F6BA6F', '#BFCCB5', 
 const Function_Dest_Color_List = ['#F6BA6F', '#BFCCB5', '#82CD47']
 const Function_Source_List =["Constant", "Previous function", "system Session", "User Session", "External"]
 const Function_Dest_List=["", "Session", "External"]
-const Function_Type_List =["ParameterMap", "GoExpression", "Javascript", "Database Query", "StoreProcedure", "SubTranCode", "DataInsert", "DataUpdate", "DataDelete","CollectionInsert","CollectionUpdate", "CollectionDelete","ThrowError","SendMessage", "SendEmail"]
-const Function_Type_Color_List = ['#82CD47', '#6DA9E4', '#F6BA6F', '#BFCCB5', '#FFEBEB', '#F0C333', '#16A085', '#C0392B', '#D35400', '#2ECC71', '#27AE60', '#8E44AD', '#F39C12', '#1ABC9C', '#E74C3C']
+const Function_Type_List =["ParameterMap", "GoExpression", "Javascript", "Database Query", "StoreProcedure", 
+	"SubTranCode", "DataInsert", "DataUpdate", "DataDelete",
+	"CollectionInsert","CollectionUpdate", "CollectionDelete",
+	"ThrowError","SendMessage", "SendEmail", 
+	"Workflow Explosion", "Start Workflow Task", "Complete Workflow Task"]
+const Function_Type_Color_List = ['#82CD47', '#6DA9E4', '#F6BA6F', '#BFCCB5', '#FFEBEB', 
+	'#F0C333', '#16A085', '#C0392B', '#D35400', 
+	'#2ECC71', '#27AE60', '#8E44AD', 
+	'#F39C12', '#1ABC9C', '#E74C3C', 
+	'#F39C24', '#1ABC8D', '#E74C9F']
+const Function_Type_icon_list = ['\ue122', '\ue122', '\ue122', '\ue122', '\ue122',
+	'\ue122', '\ue122', '\ue122', '\ue122',
+	'\ue122', '\ue122', '\ue122',
+	'\ue122', '\ue122', '\ue122',
+	'\ue122', '\ue122', '\ue122']
 const Function_Type_Obj={
 	"SubTranCode":{
 		inputs:{
@@ -804,6 +817,24 @@ const Function_Type_Obj={
 			"ToEmails":{name:"ToEmails",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
 			"Subject":{name:"Subject",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
 			"Body":{name:"Body",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""}
+		}
+	},
+	"Workflow Explosion":{
+		inputs:{
+			"WorkflowName":{name:"WorkflowName",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
+			"EntityName":{name:"EntityName",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
+			"EntityType":{name:"EntityType",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
+			"Description":{name:"Description",datatype:0,value:"",source:	0,aliasname: '',defaultvalue: ""},
+		}
+	}, 
+	"Start Workflow Task":{
+		inputs:{
+			TaskID:{name:"TaskID",datatype:1,value:"",source:	0,aliasname: '',defaultvalue: ""},
+		}
+	}, 
+	"Complete Workflow Task":{
+		inputs:{
+			TaskID:{name:"TaskID",datatype:1,value:"",source:	0,aliasname: '',defaultvalue: ""},
 		}
 	}
 

@@ -23,6 +23,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         this.data_method = this.getAttribute("data_method");
         this.condition = this.getAttribute("condition");
 
+
         if(!this.condition || this.condition == null || this.condition == undefined)
             this.condition = "";
 
@@ -218,6 +219,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           let url = "";
   
           let inputs={};
+
           if(type == "collection" && datasource !='' && data != '{}'){
                   
               inputs["collectionname"] = datasource;                 
@@ -238,13 +240,13 @@ customElements.define('ui-tabulator', class extends HTMLElement {
             
               if (that.condition != "") {
                 inputs["where"][that.condition] = "";
-                }
+              }
               url = '/sqldata/get'
-              if(this.condition){
+              if(this.condition && this.condition != ""){
                 let where={}
                 where[this.condition] = "";
                 inputs["where"] = where;
-              }
+              } 
 
             }else{
                 if (that.condition != "") {
@@ -267,8 +269,6 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           if(this.data_url != null)
               url = this.data_url;
   
-          
-
           this.url = url;
           this.inputs = inputs;
           
@@ -277,7 +277,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
           Tabulator_Columns.push(
               {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", width:30, headerSort:false, cellClick:function(e, cell){
                   cell.getRow().toggleSelect();
-                  console.log(cell, e)
+                //  console.log(cell, e)
                 }}
           )
           let mappedfields = {};
@@ -397,6 +397,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
             paginationCounter:"rows",
             clipboard:true,
             clipboardPasteAction:"replace",
+            selectable:true,
         //    locale:true,
         //    autoColumns:true,
         //    layout: "fitColumns",

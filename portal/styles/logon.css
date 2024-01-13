@@ -120,16 +120,52 @@ body {
 			-ms-flex-direction: row;
 					flex-direction: row;
 
-	position: absolute;
 	flex-direction: column;
 	bottom: 0px;
-	top: 100px;
-	width: 400px;
-	height:fit-content;
-	left:30%;	
-	border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); 
+	text-align: center;
+    flex: 1;
+    /* display: flex; */
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    position: fixed;
+    top: 45px;
+    right: 0px;
+    height: 100vh;
+	padding: 3rem 4rem;
+    box-shadow: 0 20px 50px 12px rgba(0,0,0,0.25);
+    width: auto;
 }
+.ui-login-page-content{
+	display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+.ui-login-left-content{
+	width: calc(100% - 400px);
+	background: #fff;
+	position: fixed;
+	top: 45px;
+	left: 0px;
+	height: 100vh;
+	height: 100%;
+	background: #fff;
+	position: fixed;
+	top: 45px;
+	left: 0px;
+}
+
+#iac_content_Logo{
+	display: block;
+	margin: 10px auto;
+	width: 100%;
+	height: 100vh;
+	background-image: url("images/iacflogo.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+    background-position: center;
+}
+
 .loginform-header-title {
 	font-size: 20px;
 	font-weight: bold;

@@ -430,7 +430,7 @@ var UI;
                 }
 
                 let parsedDate = new Date(this.expirateon);
-                let server  ="";
+            /*    let server  ="";
                 let localconfig = localStorage.getItem(window.location.origin+"_"+"clientconfig");
                 if(localconfig){
                     let config = JSON.parse(localconfig);
@@ -444,16 +444,16 @@ var UI;
 
 
                 if (!IACMessageBusClient)
-                    IACMessageBusClient = new IACMessageClient(server);
+                    IACMessageBusClient = new IACMessageClient(server); */
 
-           //     // UI.Log(this.token, parsedDate, new Date(), (parsedDate > new Date()))
+            //    UI.Log(this.token, parsedDate, new Date(), (parsedDate > new Date()))
                 var currentDate = new Date();
 
            // Add 10 minutes to the current date and time
                 var tenMinutesLater = new Date(currentDate.getTime() + 10 * 60000); 
 
                 if(parsedDate < tenMinutesLater && parsedDate > new Date()){
-                  //  // UI.Log("renew")
+                 //   UI.Log("renew")
                     UI.ajax.post(UI.CONTROLLER_URL+"/user/login", {"username":this.username, "password":this.password, "token":this.token, "clientid": this.clientid, "renew": true}).then((response) => {
                         userjdata = JSON.parse(response);
                         this.userID = userjdata.ID;
@@ -468,7 +468,7 @@ var UI;
                         this.timezone = userjdata.timezone;
                         userjdata.updatedon = new Date();
 
-                        // UI.Log(userjdata)
+                    //    UI.Log(userjdata)
                         localStorage.setItem(this.sessionkey, JSON.stringify(userjdata));
                         
                     //    if(UI.Notifications.getData().data.length == 0)
@@ -490,6 +490,11 @@ var UI;
                     UI.ShowError("User token expired, please login again.");
                     if(fail) 
                         fail();
+                }else{
+                    if(success){
+                        success();                        
+                    }
+                    return true; 
                 }
                     
             }
@@ -727,7 +732,7 @@ var UI;
                         UI.ShowError(error);
                     })
 
-                    this.tokenupdatetimer = window.setTimeout(this.checkiflogin, this.tokenchecktime);
+                    this.tokenupdatetimer = window.setTimeout(this.tokencheck, this.tokenchecktime);
 
                     if(success){
                         success();
@@ -769,7 +774,7 @@ var UI;
                         UI.ShowError(error);
                     })
 
-                    this.tokenupdatetimer = window.setTimeout(this.checkiflogin, this.tokenchecktime);
+                    this.tokenupdatetimer = window.setTimeout(this.tokencheck, this.tokenchecktime);
 
                     if(success){
                         success();
@@ -847,6 +852,8 @@ var UI;
 
     UI.tokencheck = tokencheck;
     
+
+
     async function getclientconfig(){
         let clientconfig = localStorage.getItem(window.location.origin+"_"+"clientconfig");
         if(clientconfig){
@@ -2362,7 +2369,7 @@ function rAFThrottle(func) {
 
           //  // UI.Log(this, this.Panel.panelElement);
             Session.views[this.id] = this;
-            UI.Log("create viewL",this.configuration)
+            UI.Log("create view",this.configuration)
    
             if(this.configuration.isform){
                 this.buildform(this.configuration.formdata);
@@ -2537,12 +2544,13 @@ function rAFThrottle(func) {
             }
 
             new UI.FormControl(this.view, "div",attr);
+            UI.Log(this.view, "div",attr, Session.snapshoot.sessionData)
             let container = document.getElementById("form_"+this.id);
            
             var formview = FormViewer.createForm({
                 container:container,
                 schema: formdata,
-                data: that.inputs,
+                data: Session.snapshoot.sessionData,
             });
             this.formview = formview
             this.isform = true;
@@ -2550,12 +2558,15 @@ function rAFThrottle(func) {
 
             try{
                 formview.then((obj) => {
-                    /*
+                    
                     obj.on("submit", function(data, event){
-                        that.outputs["action"] ="submit";
-                        UI.Log("form data by submit:",data,event);
+                    //    that.outputs["action"] ="submit";
+                        //UI.Log("form data by submit:",data,event);
+                        if(!that.outputs)
+                            that.outputs = {};
+                        that.outputs = Object.assign({},that.outputs,data.data)
                         that.submit();
-                    })  */
+                    })  
 
                     obj.on("reset", function(data){
                         //UI.Log("form data by reset:",data);
@@ -2565,13 +2576,13 @@ function rAFThrottle(func) {
                         if(item.type == 'button' && item.action == 'submit'){
                             if(item.properties && item.properties.hasOwnProperty("action")){
                                 var action = item.properties.action;
-                                console.log($('#'+that.id).find('button[fieldid="'+item.id+'"]'))
+                                //console.log($('#'+that.id).find('button[fieldid="'+item.id+'"]'))
                                 $('#'+that.id).find('button[fieldid="'+item.id+'"]').click(function() {
                                     
                                     that.outputs.action =action;
                                   //  that.Context.outputs.action = action;
-                                    console.log('click button', item.id, action, that.outputs);
-                                    that.submit();
+                                //    console.log('click button', item.id, action, that.outputs);
+                                //    that.submit();
                                 });
                             }
         
@@ -2585,7 +2596,7 @@ function rAFThrottle(func) {
                     UI.Log("form data by submit:",data);
                     that.submit();
                 })
-                formview.on("reset", function(data){
+            /*    formview.on("reset", function(data){
                     UI.Log("form data by reset:",data);
                     formview.importSchema(formdata, that.inputs); 
                 }) */
@@ -2805,6 +2816,11 @@ function rAFThrottle(func) {
             newcontent = newcontent.replaceAll("$View", 'Session.views["'+this.id+'"]');
         //    newcontent = newcontent.replaceAll("$View", this.id+"_");
 
+            newcontent = newcontent.replaceAll("$UserName", UI.userlogin.username);
+            newcontent = newcontent.replaceAll("$UserID", UI.userlogin.userID);
+            newcontent = newcontent.replaceAll("$LocalDateTime", (new Date()));
+            newcontent = newcontent.replaceAll("$UTCDateTime", (new Date()));
+
             let inputnames = Object.keys(this.inputs);
 
             for(var i=0;i<inputnames.length;i++){                
@@ -2847,7 +2863,7 @@ function rAFThrottle(func) {
                         UI.Log("selected action:",Session.snapshoot.sessionData.action,action,action.type)
                         Session.snapshoot.sessionData.action ="";
                                                 
-                        if(action.type == "Transaction"){
+                        if(action.type.toLowerCase() == "transaction"){
                             if(action.code !="" && action.code){
                                 this.executeTransaction(action.code, Session.snapshoot.sessionData, function(response){
                                     //   UI.Log("load data success:", response);
@@ -2866,7 +2882,7 @@ function rAFThrottle(func) {
                                 this.executeactionchain();          
                             }                  
                         }
-                        else if(action.type == "Home"){
+                        else if(action.type.toLowerCase() == "home"){
                             this.Panel.page.clear();
                         //    Session.panels = {};
                         //    Session.views = {};
@@ -2875,7 +2891,7 @@ function rAFThrottle(func) {
                             // clear the crumbs
                             let page = new Page({"name":"Portal Menu"});
                         }
-                        else if(action.type == "Back"){
+                        else if(action.type.toLowerCase() == "back"){
                             console.log(Session.stack)
                             if(Session.stack.length > 1){
                                 Session.popFromStack();
@@ -2887,14 +2903,14 @@ function rAFThrottle(func) {
                                 this.Panel.page.clear();
                             //    Session.panels = {};
                             //    Session.views = {};
-                            //    Session.pages = {};
+                            //    Session.pages = {};.
                                 Session.clearstack();
                                 // clear the crumbs
                                 let page = new Page({"name":"Portal Menu"});
                             }
 
                         }
-                        else if(action.type == "view"){
+                        else if(action.type.toLowerCase() == "view"){
                             if(action.view){
                                 UI.Log("actions:",action.view)
 
@@ -2915,7 +2931,7 @@ function rAFThrottle(func) {
                             }   
 
                         }                    
-                        else if(action.type == "page"){
+                        else if(action.type.toLowerCase() == "page"){
                             
                             if(!action.page || action.page == ""){
                                 UI.Log("there is no page to load");
@@ -2933,8 +2949,61 @@ function rAFThrottle(func) {
                                 new Page({"file":action.page});
                             else
                                 new Page({"name":action.page});    
+                        }else if(action.type.toLowerCase() == "pagebycode"){
+                            
+                            if(!action.page || action.page == ""){
+                                UI.Log("there is no page to load");
+                                return;
+                            }
+                            Session.panels = {};
+
+                            this.Panel.page.clear();
+                        //    Session.views = {};
+                        //    Session.pages = {};
+                            if(this.outputs.hasOwnProperty(action.page) && this.outputs[action.page] != "")
+                               new Page({"name":this.outputs[action.page]});    
+                        }else if(action.type.toLowerCase() == "completewftask"){
+                            if (!this.inputs.hasOwnProperty("workflow_taskid")){
+                                UI.ShowError("there is no taskid. ")
+                                return;
+                            }
+                            UI.Log("view outputs:",this.outputs)
+                            let taskid = this.inputs.workflow_taskid;
+                            let trancode = this.outputs.workflow_trancode || ""
+                            let processdata = this.outputs || {};
+
+                            let inputs = {
+                                data:{
+                                    taskid: taskid,
+                                    trancode: trancode,
+                                    processdata: processdata
+                                }
+                            }
+
+                            UI.Post("/workflow/updatedatacomplete", inputs, function(response){
+                                UI.Log("completed updating process data and complete task.")
+                                console.log(Session.stack)
+                                if(Session.stack.length > 1){
+                                    Session.popFromStack();
+                                    let stackitem = Session.popFromStack();
+                                    that.Panel.page.clear();
+                                    let page = new Page(stackitem.CurrentPage.configuration);
+                                    
+                                }else{
+                                    that.Panel.page.clear();
+                                //    Session.panels = {};
+                                //    Session.views = {};
+                                //    Session.pages = {};.
+                                    Session.clearstack();
+                                    // clear the crumbs
+                                    let page = new Page({"name":"Portal Menu"});
+                                } 
+                            }, function(err){
+                                UI.ShowError(err)
+                            })
+
                         }
-                        else if(action.type == "script"){
+                        else if(action.type.toLowerCase() == "script"){
                             /*if(action.script){
                                 let dynamicFunction = new Function(action.script)
                                 //action.script(Session.snapshoot.sessionData);
@@ -2951,7 +3020,7 @@ function rAFThrottle(func) {
                                 Session.snapshoot.sessionData.action = action.next;
                                 this.executeactionchain();          
                             }   
-                        }else if(action.type == "popup"){
+                        }else if(action.type.toLowerCase() == "popup"){
                             if(action.popupview){
                                 this.Panel.page.popupOpen(action.popupview);
                             }else {
@@ -2963,7 +3032,7 @@ function rAFThrottle(func) {
                             }  */
                            
 
-                        }else if(action.type == "close_popup" ){
+                        }else if(action.type.toLowerCase() == "close_popup" ){
                             this.Panel.page.popupClose();
                             
                          /*   if(action.next && action.next !=""){
@@ -2974,12 +3043,17 @@ function rAFThrottle(func) {
                                 Session.snapshoot.sessionData.action = action.next;
                                 this.executeactionchain();          
                             }   
-                        }else if(action.type == "close_popup_refresh" ){
+                        }else if(action.type.toLowerCase() == "close_popup_refresh" ){
 
                             this.Panel.page.popupClose();
                             this.Panel.page.Refresh();
+
+                        }else if(action.type.toLowerCase() =="refresh"){
+                            this.Panel.page.Refresh();
+                        }else{
+                            UI.ShowError("The action type dows now support.", action.type);
                         }
-    
+                        
                        /* if(action.type != "Script" && action.script && action.script !="" && chaintime == 0){
                             if(action.script){
                                 let dynamicFunction = new Function(action.script)
@@ -3299,11 +3373,30 @@ function rAFThrottle(func) {
                     let responsedata = JSON.parse(response);
                     //  Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, responsedata.Outputs);
                       that.updatesession(responsedata.Outputs)
+                      
                 }, function(error){
                      UI.ShowError(error)
                 });   
+                //await that.loadtrantypedata()
             }
+            //else
+            //    await this.loadtrantypedata()
+            await this.loadtrantypedata();
+            await this.load();
+
+        }
+        async loadtrantypedata(){
+            UI.Log("load trantype data"), this.configuration
+            if(this.configuration.trantype == "workflow"){
+                await this.getworkflowtaskdata();
+             //   await this.load()
+            }
+            //else
+            //    await this.load()
+        }
+        async load(){            
             
+               
             // UI.Log(this.configuration)
             let id = this.id;
             let page =null;
@@ -3412,6 +3505,27 @@ function rAFThrottle(func) {
                 this.page.panel = panel.create();
                 this.panels.push(panel);
             }
+        }
+        async getworkflowtaskdata(){
+            let that = this;
+            let taskid = Session.snapshoot.sessionData.workflow_taskid;
+            if(taskid == null || taskid == 0)
+                return;
+
+            let inputs ={
+                data: {
+                    taskid: taskid
+                }
+            }
+            UI.Log("load the workflow pretask data", inputs)
+            await UI.Post("/workflow/pretaskdata", inputs, function(response){
+                let data = JSON.parse(response);
+                UI.Log("the task pretaskdata is:", data)
+
+                that.updatesession(data.data)
+            }, function(err){
+                UI.ShowError(err)
+            })
         }
         updatesession(data){
             Session.snapshoot.sessionData =  Object.assign({},Session.snapshoot.sessionData, data);

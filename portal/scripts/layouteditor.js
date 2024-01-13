@@ -21,6 +21,7 @@ var LayoutEditor = {
         FullHeight:0,
         NodeList:[],
         LeftPanelWidth: 350,
+        PopViewList:[],
         initialize: function (data=null){
              UI.Log(CustomGridStack)
             let width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -734,6 +735,21 @@ var LayoutEditor = {
           attrs={id: 'isdefault',type: 'checkbox',checked: LayoutEditor.JsonObj.data.isdefault || '',style: 'width: 100%;'}
           new UI.FormControl(container, 'input',attrs);
           
+          attrs={
+            for: 'trantype',
+            innerHTML: 'Transaction Type'
+          }
+          new UI.FormControl(container, 'label',attrs);
+          attrs={
+            id: 'trantype',
+            type: 'text',
+            value: LayoutEditor.JsonObj.data.trantype || '',
+            placeholder: 'Transaction Type',
+            style: 'width: 100%;'
+          }
+          new UI.FormControl(container, 'input',attrs);
+
+
           attrs={for: 'orientation',innerHTML: 'Orientation'}
           new UI.FormControl(container, 'label',attrs);
           attrs={
@@ -767,8 +783,10 @@ var LayoutEditor = {
             let onloadcode = $('#onloadcode').val();
             let lngcode = $('#pagetitle_lngcode').val();
             let style = $('#style').val();
+            let trantype = $("#trantype").val();
+
             UI.Log(name, version, isdefault, orientation)
-            LayoutEditor.JsonObj.updateNode("", {name: name, version: version, isdefault: isdefault, orientation: orientation, initcode: initcode, onloadcode: onloadcode,title:title,lngcode:lngcode, attrs: {style: style}} )     
+            LayoutEditor.JsonObj.updateNode("", {name: name, version: version, isdefault: isdefault, orientation: orientation, trantype:trantype, initcode: initcode, onloadcode: onloadcode,title:title,lngcode:lngcode, attrs: {style: style}} )     
             LayoutEditor.ShowPageStructure();
             $('#properties').remove(); 
           }}
@@ -808,7 +826,7 @@ var LayoutEditor = {
                 style: 'width: 100%;'
             }
             new UI.FormControl(container, 'input',attrs);
-            
+
             attrs={
               for: 'panelcontainer',
               innerHTML: 'Is a Parent Panel?', 
@@ -945,7 +963,9 @@ var LayoutEditor = {
                 grid.widthmethod = widthmethod;
                 grid.heightmethod = heightmethod;
                 grid.iscontainer = $('#panelcontainer').is(':checked');                
-                grid.content = name         
+                grid.content = name
+                //grid.trantype = trantype
+
                 LayoutEditor.grid.update(el, grid.x, grid.y, grid.w, grid.h);       
                 LayoutEditor.generateJson();
                 LayoutEditor.ShowPageStructure();
@@ -1171,7 +1191,7 @@ var LayoutEditor = {
           new UI.FormControl(container, 'button',attrs, events);
           UI.translate(document.getElementById('properties'));
         },
-        load_viewConfigue: function(path){
+        load_viewConfigue: function(path, type="view"){
           
           let cfg = {
             "file":"templates/datalist.html", 
@@ -1207,7 +1227,12 @@ var LayoutEditor = {
             UI.Post(url, inputs, function(response){
               UI.Log(response)
               let result = JSON.parse(response);
-              let view = LayoutEditor.JsonObj.getNode(path);
+              
+              let view = {}
+              if(type == "panelview")
+                view ={}
+              else 
+                view = LayoutEditor.JsonObj.getNode(path);
               let data = {};
               data.name = result.data.name;
               data.config = result.data.name;
@@ -1216,9 +1241,20 @@ var LayoutEditor = {
               data.inputs = result.data.inputs;
               data.outputs = result.data.outputs;
               data.actions = result.data.actions;
-              view.value.type = "document"
+              
+              if(!view.hasOwnProperty("value")){
+                let value ={
+                  type: "document"
+                }
+                view["value"] = value
+              }else
+                view.value.type = "document"
               let viewdata = Object.assign(view.value, data);
               view.value = viewdata;
+
+              if(type == "panelview")
+                LayoutEditor.JsonObj.addNode(path, view.value)
+
               LayoutEditor.generateLayout();
               LayoutEditor.ShowPageStructure();
               page.popupClose();  
@@ -1268,8 +1304,11 @@ var LayoutEditor = {
               {attrs:{value: 'Home', innerHTML: 'Home', lngcode: 'Home'}},
               {attrs:{value: 'Back', innerHTML: 'Back',lngcode: 'Back'}},
               {attrs:{value: 'page', innerHTML: 'Page',lngcode: 'Page'}},
+              {attrs:{value: 'pagebycode', innerHTML: 'Page by Code',lngcode: 'PagebyCode'}},
               {attrs:{value: 'script', innerHTML: 'Script',lngcode: 'Script'}}, 
               {attrs:{value: 'view', innerHTML: 'View',lngcode: 'View'}},
+              {attrs:{value: 'completewftask', innerHTML:'complete Workflow task', lngcode:'completewftask'}},
+              {attrs:{value: 'refresh', innerHTML: 'Refresh',lngcode: 'Refresh'}},
               {attrs:{value: 'popup', innerHTML: 'Popup',lngcode: 'Popup'}},
               {attrs:{value: 'close_popup', innerHTML: 'Close Popup',lngcode: 'Close Popup'}},
               {attrs:{value: 'close_popup_refresh', innerHTML: 'Close Popup & Refresh',lngcode: 'Close Popup Refresh'}},
@@ -1290,7 +1329,7 @@ var LayoutEditor = {
                 $('#trancode_section input').prop("disabled", false);
                 $('#trancode_section .fa-plus').prop("disabled", false);
               }
-              else if( type == 'page'){
+              else if( type == 'page' || type == 'pagebycode'){
                 $('#actionpage_section input').prop("disabled", false);
                 $('#actionpage_section .fa-plus').prop("disabled", false);
               }
@@ -1635,6 +1674,25 @@ var LayoutEditor = {
               nodelist = nodelist.concat(childpanels);
             }
           }
+
+          LayoutEditor.PopViewList = {};
+
+          if(LayoutEditor.JsonObj.data.hasOwnProperty("popupviews"))
+            LayoutEditor.PopViewList = LayoutEditor.JsonObj.data.popupviews
+
+          let popupnodeid = UI.generateUUID()
+          let popupnodedata =[{
+            text: "Popup Views",
+            id: popupnodeid,
+            parent: rootid,
+            state: { opened: true },
+            a_attr: {"node-type": "dummy", "panelid":"#" ,"data-key":"Popup Node"} ,
+            icon: "fa-brands fa-delicious",          
+          }]
+          nodelist = nodelist.concat(popupnodedata)
+          let popupviewnodes = LayoutEditor.BuildPopviewnode(popupnodeid)
+          nodelist = nodelist.concat(popupviewnodes);
+
           LayoutEditor.NodeList = nodelist;
           UI.Log(nodelist)
         //  let pagetree= document.getElementById('ui-json-object-tree');
@@ -1731,20 +1789,22 @@ var LayoutEditor = {
                       LayoutEditor.ShowPageStructure();
                       break;
                     case 'Add Panel View':
+                      let panelviewspath = nodekey + "/panelviews";
+                      LayoutEditor.load_viewConfigue(panelviewspath, "panelview");
+                      break;
+                      /*
                       let viewname = prompt("Please enter view name", "");
                       if (viewname != null) {
                         let view = {name: viewname, config: '', file: '', inputs: {}, outputs: {}};
                         let panelviewspath = nodekey + "/panelviews";
                         let panelviews = LayoutEditor.JsonObj.addNode(panelviewspath, view);
-                      /*  gridNode.panelviews.push(view);
-                        LayoutEditor.generateJson();
-                        LayoutEditor.render(); */
+                      
                         LayoutEditor.generateLayout();
                         LayoutEditor.ShowPageStructure();
                       }
-                      break;
+                      break; */
                     case 'Link View':
-                      LayoutEditor.load_viewConfigue(nodekey+"/view");
+                      LayoutEditor.load_viewConfigue(nodekey+"/view", "view");
                       break;
                   }
 
@@ -1866,11 +1926,15 @@ var LayoutEditor = {
                       LayoutEditor.ShowViewProperties(nodekey);
                       break;
                     case 'Link View':
-                      LayoutEditor.load_viewConfigue(nodekey);
+                      LayoutEditor.load_viewConfigue(nodekey, "view");
                     
                     break;
                     case 'Remove':
-                      
+                      if(viewtype != "view"){
+                        LayoutEditor.JsonObj.deleteNode(nodekey)
+                        LayoutEditor.generateLayout();
+                        LayoutEditor.ShowPageStructure();
+                      }
                       break;
                     case 'Goto View':
                       let nodedata = (LayoutEditor.JsonObj.getNode(nodekey)).value;
@@ -1916,7 +1980,7 @@ var LayoutEditor = {
                     icon: 'fa-minus',
                     disabled: function(){
                       let nodedata = (LayoutEditor.JsonObj.getNode(nodekey)).value;
-                      if(nodedata.hasOwnProperty('name')){
+                      if(nodedata.hasOwnProperty('name') && viewtype != "view"){
                         return false
                       }
                       return true;
@@ -2033,6 +2097,9 @@ var LayoutEditor = {
                     case 'Redlines':
                       LayoutEditor.JsonObj.showRedlines();
                       break;
+                    case 'Test':
+                        LayoutEditor.PageTest();
+                        break;
                   }
 
                 }, 
@@ -2067,6 +2134,11 @@ var LayoutEditor = {
                     icon: 'fa-code-compare',
                     disabled:false
                   },
+                  'Test':{
+                    name: 'Test',
+                    icon: 'fa-paper-plane',
+                    disabled:false
+                  },
                   "sep1":'------------',
                   'Quit':{
                     name: 'Quit',
@@ -2078,6 +2150,10 @@ var LayoutEditor = {
             },
                     
           })
+        },
+        PageTest: function(){
+          let configuration = LayoutEditor.JsonObj.data;
+          let page = new UI.Page(configuration);
         },
         removeGridNodebyPanelID: function(panelid, nodes){
           for(var i=0;i<nodes.length;i++){
@@ -2186,7 +2262,16 @@ var LayoutEditor = {
                   icon: "fa-solid fa-square-caret-right",
                   state: { opened: true },
                 }
-                panellist.push(data); 
+                panellist.push(data);
+                let actiondata = actions[key];
+                if(actiondata.type == "popup" && actiondata.hasOwnProperty("popupview")){
+                  if(!LayoutEditor.PopViewList.hasOwnProperty(actiondata["popupview"]))
+                    LayoutEditor.PopViewList[actiondata["popupview"]] = {}  
+                    let popupview = actiondata["popupview"]
+                    let obj = {}
+                    obj[popupview] = {}
+                    LayoutEditor.JsonObj.addNode("/popupviews", obj)                  
+                } 
               }
             }
             let panelviewnodeid = UI.generateUUID()
@@ -2228,6 +2313,15 @@ var LayoutEditor = {
                       state: { opened: true },
                     }
                     panellist.push(data); 
+                    let actiondata = actions[key];
+                    if(actiondata.type == "popup" && actiondata.hasOwnProperty("popupview")){
+                      if(!LayoutEditor.PopViewList.hasOwnProperty(actiondata["popupview"]))
+                        LayoutEditor.PopViewList[actiondata["popupview"]] = {}  
+                        let popupview = actiondata["popupview"]
+                        let obj = {}
+                        obj[popupview] = {}
+                        LayoutEditor.JsonObj.addNode("/popupviews", obj)                     
+                    }
                   }
                 }
 
@@ -2235,6 +2329,23 @@ var LayoutEditor = {
             }
           }
           return panellist;
+        },
+        BuildPopviewnode: function(rootid){
+          nodelist = [];
+          for(key in LayoutEditor.PopViewList){
+            let viewID = LayoutEditor.PopViewList[key].id? LayoutEditor.PopViewList[key].id: UI.generateUUID();
+            let viewkey =  "/popupviews";
+            data = {
+              id: viewID,
+              parent: rootid,
+              text: LayoutEditor.PopViewList[key].name ? LayoutEditor.PopViewList[key].name : key,
+              a_attr: {"node-type": "view", "panelid":"", "data-key":viewkey, viewtype: "popupview"} ,
+              icon: "fa fa-solid fa-flag",
+              state: { opened: true },
+            }
+            nodelist.push(data)
+          }
+          return nodelist
         },
         ShowTree(){
           if(LayoutEditor.JsonObj)

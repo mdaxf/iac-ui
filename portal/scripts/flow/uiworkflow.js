@@ -197,8 +197,8 @@ joint.shapes.workflow.Gateway = joint.shapes.basic.Path.extend({
     type: 'workflow.Gateway',
     size: { width: 100, height: 50 },
     attrs: {
-      'path': { d: 'M 30 0 L 60 30 L 30 60 L 0 30 Z', fill: '#F8F8F8', stroke: 'black', 'stroke-width': 2 },
-      'text': { text: 'Diamond', 'ref-x': 0.5, 'ref-y': 0.1, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 }
+      'path': { d: 'M 30 0 L 60 30 L 30 60 L 0 30 Z', fill: '##FCF3CF', stroke: 'black', 'stroke-width': 2 },
+      'text': { text: 'Routing', 'ref-x': 0.5, 'ref-y': -1, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 }
     }
   }, joint.shapes.basic.Path.prototype.defaults),
   ports: {
@@ -434,6 +434,12 @@ var WorkFlow = (function () {
       }
     }
 
+    updateblockcolor(color) {
+      this.data.fill = color;
+      this.shape.attr('rect/fill', color);
+    //  this.update({ fill: color });
+    }
+
     delete() {
       let that = this
       this.flow.blocklinks.forEach(function (link) {
@@ -523,6 +529,11 @@ var WorkFlow = (function () {
       this.flow.Graph.addCell(start);
       this.shape = start;
     }
+    updateblockcolor(color) {
+      this.data.fill = color;
+      this.shape.attr('circle/fill', color);
+    //  this.update({ fill: color });
+    }
 
   }
 
@@ -555,6 +566,11 @@ var WorkFlow = (function () {
    //   end.addPort({ group: 'in', id: 'in'+this.id, args: { dx: 50, dy: -10 } });
       this.flow.Graph.addCell(end);
       this.shape = end;
+    }
+    updateblockcolor(color) {
+      this.data.fill = color;
+      this.shape.attr('circle/fill', color);
+    //  this.update({ fill: color });
     }
 
   }
@@ -610,8 +626,8 @@ var WorkFlow = (function () {
         position: { x: this.x ? this.x : 100, y: this.y ? this.y : 100 },
         attrs: {
           size: { width: this.data.width ? this.data.width : 100, height: this.data.height ? this.data.height : 50 },
-          polygon: { fill: this.data.fill ? this.data.fill : "lightred" },
-          text: { text: this.name ? this.name : 'Gateway' }
+          path: { fill: this.data.fill ? this.data.fill : "#FCF3CF" },
+          text: { text: this.name ? this.name : 'Routing' }
         },
     /*    ports: {
           items: [
@@ -631,6 +647,13 @@ var WorkFlow = (function () {
     //  gateway.addPort({ group: 'out', id: 'out'+this.id, args: { dx: 50, dy: -10 } });
       this.flow.Graph.addCell(gateway);
       this.shape = gateway;
+
+    }
+
+    updateblockcolor(color) {
+      this.data.fill = color;
+      this.shape.attr('path/fill', color);
+    //  this.update({ fill: color });
     }
 
   }
@@ -835,7 +858,11 @@ var WorkFlow = (function () {
     init(wrapper, options) {
       this.setup_wrapper(wrapper);
       this.setup_options(options);
+
+      //if(this.options.interactive){
       this.setup_Menubar()
+      //}
+
       this.setup_flow();
       
     }
@@ -893,7 +920,7 @@ var WorkFlow = (function () {
       {
         'class': 'processflow_container',
         'id': this.wrapper + '_flow_property_panel',
-        'style': 'width:0px;height:100%;float:right;position:absolute;top:50px;right:0px;background-color:lightgrey;overflow:auto;' +
+        'style': 'width:0px;float:right;position:absolute;top:45px;right:0px;background-color:lightgrey;overflow:auto;' +
           'border-left:2px solid #ccc;resize:horizontal;z-index:9'
       },
       {
@@ -1097,12 +1124,21 @@ var WorkFlow = (function () {
 
       this.make_blocks();
       this.make_links();
-      this.make_Menubar();
+
+      if(this.options.interactive){
+        this.make_Menubar();
+      }else
+        this.menu_panel.style.display ='none';
+
       this.resize();
       this.setup_zoom();
 
-      this.setup_paperevents();
-      this.setup_contextmenu()
+      if(this.options.interactive){
+        this.setup_paperevents();
+        this.setup_contextmenu()
+      }
+
+      this.trigger_event('flow_ready',[])
     }
 
     /**
@@ -1344,6 +1380,16 @@ var WorkFlow = (function () {
           var existinglink = that.blocklinks.filter(item => item.sourceblockid == sourceblock.id && item.destblockid == destblock.id);
           if (existinglink.length > 0){
             UI.ShowError('The link already exists.');
+            return;
+          }
+
+          if(sourceblock.type == "end" || destblock.type == "start"){
+            UI.ShowError('The link cannot be created. Please check the source and destination blocks.');
+            return;
+          }
+
+          if(sourceblock.id == destblock.id){
+            UI.ShowError('The link cannot be created. Please check the source and destination blocks.');
             return;
           }
 
@@ -1774,6 +1820,40 @@ var WorkFlow = (function () {
     }
     save(){
       UI.Log(this,this.flowobjchange, this.flowobj)
+      let newobj  = JSON.parse(JSON.stringify(this.flowobj))
+      let links = newobj.links;
+      for(let i=0; i<links.length; i++){
+        for(let j=0; j<links.length; j++){
+          if((i!=j && links[i].source == links[j].source && links[i].target == links[j].target && links[i].id != links[j].id) || links[j].source == links[j].target ){
+            links.splice(j,1);
+            j--;
+          }                  
+        }
+      }
+      this.flowobj.links = links;
+      for(let i=0; i<this.flowobj.nodes.length; i++){
+        if(this.flowobj.nodes[i].type != "start" || this.flowobj.nodes[i].type != "end"){
+          if(this.flowobj.nodes[i].hasOwnProperty('processdata')){
+            if(this.flowobj.nodes[i].processdata ==""){
+              this.flowobj.nodes[i].processdata = {};
+            }else if(typeof this.flowobj.nodes[i].processdata == "string"){
+              try{
+                this.flowobj.nodes[i].processdata = JSON.parse(this.flowobj.nodes[i].processdata)
+              }catch(e){
+                this.flowobj.nodes[i].processdata = {};
+              }
+            }
+          }            
+        }
+        
+        if(this.flowobj.nodes[i].hasOwnProperty("precondition"))
+          delete this.flowobj.nodes[i].precondition
+
+        if(this.flowobj.nodes[i].hasOwnProperty("postcondition"))
+          delete this.flowobj.nodes[i].postcondition
+
+      }
+
       this.trigger_event('save_flow', [this.flowobj]);
     }
     export(){
@@ -1862,7 +1942,7 @@ var WorkFlow = (function () {
     setup_flowproperties() {
       let that = this;
       this.property_panel.innerHTML = "";
-      let attrs = [ {
+    /*  let attrs = [ {
         'class': 'processflow_container',
         'id': this.wrapper + '_flow_property_panel_header',
         'style': 'width:100%;height:30px;background-color:lightgrey;overflow:auto;border-left:2px solid #ccc;resize:horizontal;z-index:9',
@@ -1876,13 +1956,20 @@ var WorkFlow = (function () {
       new UI.Builder(this.property_panel, attrs)
 
       let header = document.getElementById(this.wrapper + '_flow_property_panel_header');
-      let content = document.getElementById(this.wrapper + '_flow_property_panel_content');
+      let content = document.getElementById(this.wrapper + '_flow_property_panel_content');*/
+      let attrs={
+        'class': 'processflow_container',
+        'id': this.wrapper + '_flow_property_panel_content',
+        'style': 'width:100%;height:100%;background-color:lightgrey;overflow:auto;border-left:2px solid #ccc;resize:horizontal;z-index:9; padding:5px'
+      }
 
+      let content = (new UI.FormControl(this.property_panel, 'div', attrs)).control;
+      
       attrs={  innerHTML: 'UUID', lngcode: 'UUID',style:"width:90%;margin:5px"}
 			new UI.FormControl(content, 'label', attrs);
 			new UI.FormControl(content, 'br', {});
 
-      attrs ={type: 'text', id: 'workflow_UUID', value: that.flowobj.type, style:"width:90%;margin:5px"};
+      attrs ={type: 'text', id: 'workflow_UUID', value: that.flowobj.uuid, style:"width:90%;margin:5px"};
       new UI.FormControl(content, 'span',attrs);
       new UI.FormControl(content, 'br', {});
 
@@ -2006,7 +2093,7 @@ var WorkFlow = (function () {
       UI.Log(block, data)
       let that = this;
       this.property_panel.innerHTML = "";
-
+      /*
       let attrs = [{
         'class': 'processflow_container',
         'id': this.wrapper + '_flow_property_panel_header',
@@ -2021,9 +2108,23 @@ var WorkFlow = (function () {
       new UI.Builder(this.property_panel, attrs)
 
       let header = document.getElementById(this.wrapper + '_flow_property_panel_header');
-      let content = document.getElementById(this.wrapper + '_flow_property_panel_content');
+      */
+      let attrs={
+        'class': 'processflow_container',
+        'id': this.wrapper + '_flow_property_panel_content',
+        'style': 'width:100%;height:100%;background-color:lightgrey;overflow:auto;border-left:2px solid #ccc;resize:horizontal;z-index:9; padding:5px'
+      }
 
-     
+      let content = (new UI.FormControl(this.property_panel, 'div', attrs)).control;
+
+      attrs={  innerHTML: 'ID', lngcode: 'ID',style:"width:90%;margin:5px"}
+			new UI.FormControl(content, 'label', attrs);
+			new UI.FormControl(content, 'br', {});
+
+      attrs ={type: 'text', id: 'block_id', value: data.id, style:"width:90%;margin:5px"};
+      new UI.FormControl(content, 'span',attrs);
+      new UI.FormControl(content, 'br', {});
+
       attrs={ for: 'block_name', innerHTML: 'Name', lngcode: 'Name',style:"width:90%;margin:5px"}
 			new UI.FormControl(content, 'label', attrs);
 			new UI.FormControl(content, 'br', {});
@@ -2151,7 +2252,7 @@ var WorkFlow = (function () {
       attrs ={type: 'text', id: 'block_trancde', value: data.trancode, style:"width:90%;margin:5px"};
       let blocktrancode =  new UI.FormControl(content,"input", attrs);
       new UI.FormControl(content, 'br', {});
-
+/*
       attrs={ for: 'block_precondition', innerHTML: 'Pre Condition', lngcode: 'Pre Condition',style:"width:90%;margin:5px"}
 			new UI.FormControl(content, 'label', attrs);
 			new UI.FormControl(content, 'br', {});
@@ -2159,16 +2260,77 @@ var WorkFlow = (function () {
       attrs ={type: 'text', id: 'block_precondition', innerHTML: data.precondition==undefined? "": data.precondition, style:"width:90%;margin:5px;height:50px"};
       let blockprecondition =  new UI.FormControl(content,"textarea", attrs);
       new UI.FormControl(content, 'br', {});
-
+*/
       attrs={ for: 'block_processdata', innerHTML: 'Process Data', lngcode: 'Process Data',style:"width:90%;margin:5px"}
       new UI.FormControl(content, 'label', attrs);
       new UI.FormControl(content, 'br', {});
-
+/*
       attrs ={type: 'text', id: 'block_processdata', innerHTML: data.processdata==undefined?"":data.processdata, style:"width:90%;margin:5px;height:50px"};
       let blockprocessdata =  new UI.FormControl(content,"textarea", attrs);
       new UI.FormControl(content, 'br', {});
+*/
+      let divsection = new UI.FormControl(content, 'div', {style:'width: 100%; display: flex;justify-content: flex-end;', class:"ui-page-actionbar"}).control;
+      var processdatatable;
+      attrs={class: 'btn btn-primary fa-plus-circle', id: 'pd_addbtn', innerHTML:' Add',lngcode:"Add", style: 'font-family:FontAwesome'}
+			let events={click: function(){
+					processdatatable.Table.addRow({});
+			}}
+			new UI.FormControl(divsection, 'button', attrs, events);
+				
+			attrs={class: 'btn btn-primary fa-minus-circle', id: 'removebtn', innerHTML:'Remove',lngcode:"Remove", style: 'font-family:FontAwesome'};
+			events={click: function(){
+        let rows = processdatatable.Table.getSelectedRows();
+        if(rows.length == 0)
+        {
+            UI.ShowError('Please select a row to delete');
+            return;
+        }
+        for(var i=0;i<rows.length;i++){
+          processdatatable.Table.deleteRow(row[i]);
+        }
+			}}
+			new UI.FormControl(divsection, 'button', attrs, events);
+			new UI.FormControl(content, 'br', {});
 
+      processdatatable = (new UI.FormControl(content, 'ui-tabulator', {id: "block_processdatatable", style:"width:90%;margin:5px; height:100px"})).control;
 
+      let tabledata =[];
+      let tablecolumns = [ 
+          {field:'name', title:'Parameter', width:200, editor: 'input' },
+          {field:'value', title:'Value', width: 100, editor: 'input'},
+      ];
+
+      if(typeof data.processdata == "string"){
+          try{
+            data.processdata = JSON.parse(data.processdata);
+          }catch(e){
+            data.processdata = {};
+          }
+      }
+      if(data.processdata == undefined){
+          data.processdata = {};
+      }
+
+      if(data.processdata != undefined){
+
+          for(key in data.processdata){
+            let value = data.processdata[key];
+            tabledata.push({ 
+                name:key,
+                value:value})
+          }
+      }
+
+        processdatatable.Table = new Tabulator(processdatatable.uitabulator, {
+          height:150,
+          selectable:true,
+          movableRows:true,								
+          layout:"fitColumns",									
+          columns:tablecolumns,
+          data:tabledata,
+        });
+
+/*
       attrs={ for: 'block_postcondition', innerHTML: 'Post Condition', lngcode: 'Post Condition',style:"width:90%;margin:5px"}
       new UI.FormControl(content, 'label', attrs);
       new UI.FormControl(content, 'br', {});
@@ -2176,15 +2338,87 @@ var WorkFlow = (function () {
       attrs ={type: 'text', id: 'block_postcondition', innerHTML: data.postcondition==undefined? "": data.postcondition, style:"width:90%;margin:5px; height:50px"};
       let blockpostcondition =  new UI.FormControl(content,"textarea", attrs);
       new UI.FormControl(content, 'br', {});
-
+*/
+      var routingtable;
+      var targetobjs;
       if(block.type == "gateway"){
         attrs={ for: 'block_routingtable', innerHTML: 'Routing Table', lngcode: 'Routing Table',style:"width:90%;margin:5px"}
         new UI.FormControl(content, 'label', attrs);
         new UI.FormControl(content, 'br', {});
-
-        attrs ={type: 'text', id: 'block_routingtable', innerHTML: data.routingtable==undefined? "": data.routingtable, style:"width:90%;margin:5px; height:50px"};
+        /*
+        attrs ={type: 'text', id: 'block_routingtable', innerHTML: data.routingtablew==undefined? "": data.routingtablew, style:"width:90%;margin:5px; height:50px"};
         let routingtable =  new UI.FormControl(content,"textarea", attrs);
         new UI.FormControl(content, 'br', {});
+        */
+        let divsection = new UI.FormControl(content, 'div', {style:'width: 100%; display: flex;justify-content: flex-end;', class:"ui-page-actionbar"}).control;
+        targetobjs = this.getblocktargets(block);
+        let paramenterobj = processdatatable.Table.getData();
+        let parameters = [];
+        for(var i=0;i<paramenterobj.length;i++){
+          parameters.push(paramenterobj[i].name);
+        }
+
+				attrs={class: 'btn btn-primary fa-plus-circle', id: 'addbtn', innerHTML:' Add',lngcode:"Add", style: 'font-family:FontAwesome'}
+				let events={click: function(){
+					routingtable.Table.addRow({});
+				}}
+				new UI.FormControl(divsection, 'button', attrs, events);
+				
+				attrs={class: 'btn btn-primary fa-minus-circle', id: 'removebtn', innerHTML:'Remove',lngcode:"Remove", style: 'font-family:FontAwesome'};
+				events={click: function(){
+          let rows = routingtable.Table.getSelectedRows();
+          if(rows.length == 0)
+          {
+            UI.ShowError('Please select a row to delete');
+            return;
+          }
+          for(var i=0;i<rows.length;i++){
+            routingtable.Table.deleteRow(row[i]);
+          }
+				}}
+				new UI.FormControl(divsection, 'button', attrs, events);
+				new UI.FormControl(content, 'br', {});
+
+        routingtable = (new UI.FormControl(content, 'ui-tabulator', {id: "block_routingtable", style:"width:90%;margin:5px; height:100px"})).control;
+
+        let tabledata =[];
+        let tablecolumns = [{field:'sequence', title:'Seq', width:35, editor: 'input'}, 
+          {field:'data', title:'Parameter', width:120, editor: 'liinputst'},
+          {field:'value', title:'Value', width: 100, editor: 'input'},
+          {field:'target', title:'Target', editor: 'list', editorParams:{values: targetobjs.namelist}},
+        ];
+
+        if(typeof data.routingtables == "string"){
+          try{
+            data.routingtables = JSON.parse(data.routingtables);
+          }catch(e){
+            data.routingtables = [];
+          }
+        }
+        if(data.routingtables == undefined){
+          data.routingtables = [];
+        }
+
+        if(data.routingtables != undefined && data.routingtables.length > 0){
+
+          for(var i=0;i<data.routingtables.length;i++){
+            let routingtable = data.routingtables[i];
+            let targetname = this.getBlockbyid(routingtable.target).data.name;
+            tabledata.push({sequence:routingtable.sequence, 
+                data:routingtable.data,
+                value:routingtable.value,
+                target:targetname})
+          }
+        }
+        routingtable.Table = new Tabulator(routingtable.uitabulator, {
+          height:150,
+          selectable:true,
+          movableRows:true,								
+          layout:"fitColumns",									
+          columns:tablecolumns,
+          data:tabledata,
+        });
+
       }
       attrs ={id: 'block_update', class:"btn btn-primary fa-save",value: "Update", style:"width:40%", innerHTML:'Update'};
       let blockupdate = ( new UI.FormControl(content,'button', attrs, {})).control;
@@ -2206,9 +2440,28 @@ var WorkFlow = (function () {
             users.push(usertokens[i].textContent)
         }
 
-        let routingtable = "";
+        let routingtabledata = [];
         if(block.type == "gateway"){
-          routingtable = document.getElementById('block_routingtable').value;
+        //  routingtable = document.getElementById('block_routingtable').value;
+          routingtabledata = routingtable.Table.getData();
+          for(var i=0;i<routingtabledata.length;i++){
+            let routingtablerow = routingtabledata[i];
+            routingtabledata[i].sequence = parseInt(routingtabledata[i].sequence)
+            for(var j=0;j<targetobjs.namelist.length;j++){
+              if(targetobjs.namelist[j] == routingtablerow.target){
+                routingtabledata[i].target = targetobjs.idlist[j];
+                break;
+              }
+            }
+            
+          }
+
+        }
+        let processdata = {};
+        let items = processdatatable.Table.getData()
+        for(var i=0; i<items.length;i++){
+          let item = items[i]
+          processdata[item.name] = item.value 
         }
 
         let data = {
@@ -2218,12 +2471,12 @@ var WorkFlow = (function () {
           users: users,
           page: blockpage.control.value,
           trancode: blocktrancode.control.value,
-          precondition: blockprecondition.control.value,
-          processdata: blockprocessdata.control.value,
-          postcondition: blockpostcondition.control.value
+       //   precondition: blockprecondition.control.value,
+          processdata: processdata,
+       //   postcondition: blockpostcondition.control.value
         }
         if(block.type == "gateway"){
-          data.routingtable = routingtable;
+          data.routingtables = routingtabledata;
         }
         block.update(data);
       //  that.render();
@@ -2237,11 +2490,11 @@ var WorkFlow = (function () {
         this.property_panel.style.display =  'none';
       })
 
-      let height = window.clientHeight - 100;
+      let height = (window.clientHeight || window.innerHeight)- 50;
       this.property_panel.style.display = 'block';
       this.property_panel.style.width = '400px';
-      this.property_panel.style.height = "auto";
-      this.property_panel.style.maxHeight = height +"px";
+      this.property_panel.style.height = height + "px";
+     // this.property_panel.style.maxHeight = height +"px";
       this.property_panel.style.overflowX = 'hidden';
       this.property_panel.style.overflowY = 'auto';
     }
@@ -2264,6 +2517,27 @@ var WorkFlow = (function () {
       tokenContainer.appendChild(removeToken);
 
       return tokenContainer;
+    }
+    getblocktargets(block){
+      let targets = [];
+      let targetnames = [];      
+      
+      for(var i=0;i<this.links.length;i++){
+        if(this.links[i].source == block.id){
+        
+          let link = this.links[i];
+          let target =link.target;
+          let targetblock = this.getBlockbyid(target);
+          targets.push(target);
+          targetnames.push(targetblock.data.name);
+        }
+      }
+      UI.Log(block, targets, targetnames)
+      return {
+        idlist: targets,
+        namelist: targetnames
+      }
+    
     }
     trigger_event(event, args) {
       if (this.options['on_' + event]) {
