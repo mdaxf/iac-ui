@@ -2510,15 +2510,15 @@ var ProcessFlow = (function(){
 		//	this.Paper.options.highlighting.magnetAvailability = magnetAvailabilityHighlighter;
 		}
 		
-			setup_Menubar(){
-				let menubars=[];
-				menubars.push({
+		setup_Menubar(){
+			let menubars=[];
+			/*	menubars.push({
 					type: 'Tree',
 					datakey: 'Tree',
 					description: 'Flow tree',
 					category: 'trancode'
-				})
-				menubars.push({
+				}) */
+			menubars.push({
 					type: 'New',
 					datakey: 'New',
 				description: 'New',
@@ -2540,6 +2540,12 @@ var ProcessFlow = (function(){
 				type: 'Change',
 				datakey: 'Change',
 				description: 'Change?',
+				category: 'trancode'
+			})
+			menubars.push({
+				type: 'Test',
+				datakey: 'Test',
+				description: 'Test',
 				category: 'trancode'
 			})
 			menubars.push({
@@ -7071,6 +7077,9 @@ var ProcessFlow = (function(){
 			let that = this;
 			UI.Log(menudata, this)
 			switch(menudata.type){
+				case "Test":
+					this.test_flow();
+					break;
 				case "Tree":
 					this.show_flowtree();
 					break;
@@ -7109,7 +7118,267 @@ var ProcessFlow = (function(){
 					break;
 			}
 		}
+		test_flow(){
 		
+			let that = this;
+			if(that.flowobj.trancodename == undefined || that.flowobj.trancodename == ''){
+				UI.ShowError('Please enter the trancode name and save the trancode before testing it!')
+				return;
+			}
+
+			/*
+			if(this.flowobjchange){
+
+				if(that.flowobj.trancodename == undefined || that.flowobj.trancodename == ''){
+					UI.ShowError('Please enter the trancode name and save the trancode before testing it!')
+					return;
+				}
+
+				let result = confirm("You need to save the trancode before testing it. Do you want to save the flow?");
+
+				if(result){
+					this.trigger_event("save_flow", [that.flowobj]);
+					this.flowobjchange = false;
+				}	
+			}
+			*/
+
+			this.item_panel.innerHTML  = "" 
+			var divsToRemove = this.item_panel.getElementsByClassName("container-fluid");
+			while (divsToRemove.length > 0) {
+				divsToRemove[0].parentNode.removeChild(divsToRemove[0]);
+			}
+			let attrs={class: 'container-fluid',style: 'width: 90%;height:95%;margin-left:10px;margin-right:10px;'}
+			let container_fluid = (new UI.FormControl(this.item_panel, 'div', attrs)).control;
+			
+			attrs={class: 'btn btn-danger', id: 'closefunction', innerHTML:'X',style: 'float:right;top:2px;right:2px;position:absolute;'}
+			let events={click: function(){
+				that.item_panel.style.width = "0px";
+				that.item_panel.style.display = "none";
+				that.item_panel.innerHTML  = ""
+			
+				that.property_panel.innerHTML  = ""
+				that.property_panel.style.width = "0px";
+				that.property_panel.style.display = "none";
+			}};
+			new UI.FormControl(container_fluid, 'button', attrs, events);
+
+			new UI.FormControl(container_fluid, 'h2', {innerHTML:'TranCode Testing', lngcode:'TransCodeTesting'});
+			new UI.FormControl(container_fluid, 'br', {});
+			
+			let rows=[]
+			if(!that.flowobj.hasOwnProperty('inputs'))
+				that.flowobj.inputs =[];
+
+			that.flowobj.inputs.forEach(function(inputparameter){
+				let cells=[];
+				cells.push({data:{value:inputparameter.name}});
+				cells.push({data:{selected:inputparameter.datatype}});
+				cells.push({data:{value:inputparameter.list}});
+				cells.push({data:{value:inputparameter.default}});
+				rows.push(cells);
+			})
+			let table_data={
+				attrs:{class: 'table table-bordered', id: 'parameter_input_table', style: 'width: 100%;'},	
+				headers:[{innerHTML:'Name', style:'width:120px;'},
+					{innerHTML:'Type', style:'width:90px;'},
+					{innerHTML:'Array?', style:'width:40px;'},
+					{innerHTML:'Test Val', style:'width:120px;'}],
+				columns:[{control:'input', attrs:{class:'parameter_name',style:'width:100%;', disabled:true}},
+				{control:'select', attrs:{class:'parameter_datatype',style:'width:100%;', disabled:true},options:Function_DataType_List},
+				{control:'checkbox', attrs:{class:'parameter_list',style:'width:100%;', disabled:true}},
+				{control:'input', attrs:{class:'parameter_default',style:'width:100%;'}}],
+				tr:{
+					attrs:{dragable: true, dragstart:"parameter_dragStart(event, 'input', this)"},
+					events:{}
+				},
+				rows:rows
+			}
+
+			let input_table = new UI.HtmlTable(container_fluid, table_data);
+			new UI.FormControl(container_fluid, 'br', {});
+
+			attrs ={for:"test_remote_seesion", innerHTML: "Available for Remote Debug", style: "width: 50%" }
+			new UI.FormControl(container_fluid, "label",attrs,{})
+
+			attrs ={id: "test_remote_session", type:"checkbox", style:"width:50%"}
+			new UI.FormControl(container_fluid,"input", attrs, {})
+
+			new UI.FormControl(container_fluid, 'br', {});
+
+			
+			attrs={class:'btn btn-primary fa-save',id:'Testfunction',innerHTML:'Test',style:'margin-bottom:10px;'}
+			events={
+				click: function(){
+					let inputs = {};
+					
+					$('#parameter_input_table').find('tr').each(function(){
+					//	UI.Log($(this))
+						if($(this).find('.parameter_name').val() != undefined && $(this).find('.parameter_name').val() != '')
+							inputs[$(this).find('.parameter_name').val()] = $(this).find('.parameter_default').val()
+					})
+					let data = {
+							trancode: that.flowobj.trancodename,
+							version: that.flowobj.version,
+							trancodeobj: that.flowobj,
+							inputs: inputs,
+							remote:  $('#test_remote_session').is(":checked")
+					}
+
+					if (!IACMessageBusClient){
+							let server  ="";
+							let localconfig = localStorage.getItem(window.location.origin+"_"+"clientconfig");
+							if(localconfig){
+								let config = JSON.parse(localconfig);
+								if(config.hasOwnProperty("signalrconfig")){
+									let signalrconfig = config.signalrconfig;
+									if(signalrconfig.hasOwnProperty("server")){
+										server = signalrconfig.server;
+									}
+								}
+							}
+							IACMessageBusClient = new IACMessageClient(server);
+						
+					}
+					IACMessageBusClient.Subscribe("IAC_TRANCODE_TEST_RESULT", function(message){
+							let jdata = JSON.parse(message);
+							that.updatetestresult(data)
+					})
+
+					UI.Log(data)
+					UI.Post('/trancode/uitest', data, 
+							function(res){
+								UI.Log("Test Completed")
+								
+								let result = JSON.parse(res);
+								UI.Log(result.results)
+								that.show_testresults(result.results)
+							}, function(err){
+							UI.ShowError(err);
+					})
+						// built the trancode tree
+										
+				}
+			}
+			new UI.FormControl(container_fluid, 'button', attrs, events);
+
+			attrs={class:'btn btn-danger fa-laptop-file',id:'remotefunction',innerHTML:'Remote Debug',style:'margin-bottom:10px;'}
+			events={click: function(){
+				let testsessionid = prompt("Please supply the test session ID:", "")
+				
+				if(testsessionid == ""){
+					UI.ShowError("Test Session ID is required for the remote debuging!")
+					return;
+				}
+
+				let data = {
+					testsessionid: testsessionid
+				}
+
+				UI.Post('/trancode/remotetest', data, 
+							function(res){
+								UI.Log("Get Remote Test Result")
+								UI.Log(res)
+								let result = JSON.parse(res);
+								that.show_testresults(result.results)
+							}, function(err){
+							UI.ShowError(err);
+				})
+				
+
+			}}
+
+			new UI.FormControl(container_fluid, 'button', attrs, events);
+
+			attrs={class:'btn btn-danger fa-close',id:'closefunction',innerHTML:'Close',style:'margin-bottom:10px;'}
+			events={click: function(){
+				that.item_panel.innerHTML  = ""
+				that.item_panel.style.width = "0px";
+				that.item_panel.style.display = "none";
+
+				that.property_panel.innerHTML  = ""
+				that.property_panel.style.width = "0px";
+				that.property_panel.style.display = "none";
+			}}
+			new UI.FormControl(container_fluid, 'button', attrs, events);
+
+			
+			that.item_panel.style.width = "500px";
+			that.item_panel.style.display = "block";
+
+			UI.translate(that.item_panel);
+
+		
+		}
+		show_testresults(result){
+
+			this.property_panel.innerHTML  = "" 
+			var divsToRemove = this.property_panel.getElementsByClassName("container-fluid");
+			while (divsToRemove.length > 0) {
+				divsToRemove[0].parentNode.removeChild(divsToRemove[0]);
+			}
+
+			let that = this;
+
+			let attrs={
+				class: 'container-fluid',
+				style: 'width:100%; height:95%; margin-left:10px; margin-right:10px;'
+
+			}
+
+			let property_container = (new UI.FormControl(this.property_panel, 'div', attrs)).control;
+		
+			attrs={innerHTML: 'Trancode Test Results', lngcode: 'TranCodeTestResults', style: 'width: 100%; text-align: center;'}
+			new UI.FormControl(property_container, 'h2', attrs);
+			new UI.FormControl(property_container, 'br', {});
+			
+			let width = window.innerWidth - 500;
+			if(width < 500)
+				width = 500;
+
+			if(result.hasOwnProperty("SessionID")){
+				attrs = {for: "test_session_id", innerHTML: "Test Session ID:", style: "width: "+ width+"px;"}
+				new UI.FormControl(property_container, 'label', attrs);
+
+				attrs ={id: "test_session_id", value: result.SessionID, stye: "width: "+ width+"px;", disabled: true}
+				let sessionidinput = (new UI.FormControl(property_container, 'input', attrs)).control;
+				sessionidinput.style.width = width + "px"
+				new UI.FormControl(property_container, 'br', {});
+			}
+
+			new UI.FormControl(property_container, 'div', {id:'flowtesttree',class:'tree',style:'width:100%;height:100%;'});
+
+			
+			//property_container.appendChild(cancelbutton);
+			that.property_panel.style.width = width+"px";
+			that.property_panel.style.display = "flex";
+			UI.translate(that.property_panel);
+
+			let TestJsonObj = new UI.JSONManager(result,{allowChanges:true})
+			var options = {
+				showlabelonly:true,
+				editable:true,
+				openlevel: -1
+			}
+			let rootdata ={
+
+				text: that.flowobj.trancodename + '   ' + that.flowobj.version,
+				state: { opened: true },
+				children: TestJsonObj.formatJSONforjstree(options),
+			}
+			
+			$(function() {
+			  $('#flowtesttree').jstree({
+				'core': {
+				  'data': rootdata
+				}
+			  });		
+			});
+
+		}
+		updatetestresult(data){
+			UI.Log("Test result:", data)
+		}
 		show_flowtree(){
 			let that = this;
 			this.item_panel.innerHTML  = "" 

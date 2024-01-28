@@ -1349,6 +1349,7 @@ var UI;
         constructor(message, type="Error"){
             this.message = message;
             this.timer = null;
+            this.type = type;
             this.className = "ui-errormessage-summary";
             if(type == "Warning")
                 this.className = "ui-warningmessage-summary";
@@ -1392,7 +1393,12 @@ var UI;
             }        
             this.control = (new UI.FormControl(messageEl,"div", attrs, event)).control;
             messageEl.style.display = "block";   
-            this.timer = window.setTimeout(this.clear, 60000);
+            if(this.type == "Error")
+                this.timer = window.setTimeout(this.clear, 60000);
+            else if(this.type == "Success" || this.type == "Info")
+                this.timer = window.setTimeout(this.clear, 1500);
+            else
+                this.timer = window.setTimeout(this.clear, 5000);
         }
         clear=()=>{
             for(var i=0;i<UI.messageItems.length;i++){
@@ -2150,30 +2156,28 @@ function rAFThrottle(func) {
                 UI.Log(panels, panel, panelname,viewname)
                 if(panel.name == panelname){
                     UI.Log(panel, panel.configuration)
-                    if(panel.configuration.hasOwnProperty("view")){
+                    if(panel.hasOwnProperty("configuration") && panel.configuration.hasOwnProperty("view")){
                         if(panel.configuration.view.name == viewname)
                             return panel.configuration.view;
                     }else if(panel.hasOwnProperty("panelviews")){
-                        for(var j=0; j<panel.configuration.panelviews.length;j++){
+                        for(var j=0; j<panel.panelviews.length;j++){
 
-                            if(panel.configuration.panelviews[j].name == viewname)
-                                return panel.configuration.panelviews[j];
+                            if(panel.panelviews[j].name == viewname)
+                                return panel.panelviews[j];
                         }
-                        return {"name": viewname}                    
+                        return {"name": viewname,
+                                "type":"document"}                    
                     }
                 //    return {"name": viewname}
                 }else if(panel.hasOwnProperty("panels")){
                     if(panel.panels.length > 0){
-                        let view =  that.getpagepanelviewcfg(panel.panels,panelname, viewname)            
-                        if (view != null)
-                            return view;
+                       return  that.getpagepanelviewcfg(panel.panels,panelname, viewname)            
                     }
                 }else if(panel.hasOwnProperty("configuration")){
                     if(panel.configuration.hasOwnProperty("panels"))
                         if(panel.configuration.panels.length > 0){
-                            let view =  that.getpagepanelviewcfg(panel.configuration.panels,panelname, viewname)            
-                            if (view != null)
-                                return view;
+                            return  that.getpagepanelviewcfg(panel.configuration.panels,panelname, viewname)            
+                            
                         }
                 }
             }
@@ -2182,18 +2186,26 @@ function rAFThrottle(func) {
         changeview(view){
             //this.view.clear();
             this.clear();
+            /*this.configuration.view = {
+                "name": view,
+                "type": "document"
+                };
+                this.displayview();
+            return;  */
+
             let panelview = this.getpagepanelviewcfg(Session.CurrentPage.panels,this.name, view);
             this.panelviewcfg = panelview
 
+            console.log("changeview",view, this.name,panelview)
             if(panelview != null){
                 this.configuration.view = panelview;
                 this.displayview();
             } else {
-            this.configuration.view = {
-               "name": view,
-               "type": "document"
-            };
-            this.displayview();
+                this.configuration.view = {
+                "name": view,
+                "type": "document"
+                };
+                this.displayview();
             }
         }
         displayview(){
@@ -2249,6 +2261,11 @@ function rAFThrottle(func) {
 
             }else if(configuration.config && configuration.config != "" && configuration.config != null) {
                 await this.loadviewconfiguration(configuration);                 
+            }else if((!configuration.config || configuration.config =="") && !configuration.isform 
+                && (!configuration.html || configuration.html =="") 
+                && (!configuration.file || configuration.file == "")
+                && (!configuration.content || configuration.content == "") ){
+                await this.loadviewconfigurationfromdocument(configuration);    
             }
             else
             {    
@@ -2483,7 +2500,18 @@ function rAFThrottle(func) {
                 let result = JSON.parse(response);
                 
                 UI.Log("loadviewconfigurationfromdocument:",result,that.configuration);
+
+                if(!that.configuration.hasOwnProperty("inputs"))
+                    that.configuration["inputs"] = {}
+                if(!result.data.hasOwnProperty("inputs"))
+                    result.data["inputs"] = {}
+                if(!configuration.hasOwnProperty("inputs"))
+                    configuration["inputs"] = {}
+                
+                let cfginputs = Object.assign({}, that.configuration.inputs, result.data.inputs, configuration.inputs) 
+
                 that.configuration = Object.assign({}, that.configuration, result.data,configuration); 
+                that.configuration.inputs = cfginputs;
             //    UI.Log("loadviewconfigurationfromdocument:",this.configuration,configuration, result.data);
             //    Object.assign({},this.configuration,result.data);
                 UI.Log("loadviewconfigurationfromdocument:",that.configuration,configuration, result.data);
@@ -3140,6 +3168,11 @@ function rAFThrottle(func) {
         }
         fireOnLoaded() {
             let that = this;           
+
+            /*
+            if(that.onLoadedScript && that.onLoadedScript instanceof Function){
+                that.onLoadedScript();
+            }  */
 
             if(that.loaded){
                 // UI.Log("fireOnLoaded",document.readyState)

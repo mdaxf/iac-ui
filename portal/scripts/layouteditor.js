@@ -1350,50 +1350,50 @@ var LayoutEditor = {
           attrs={for: 'trancode',innerHTML: 'TranCode',lngcode: 'TranCode'}
           new UI.FormControl(container, 'label',attrs);
 
-          let row = (new UI.FormControl(container, 'div',{id:'trancode_section',style:"display:row; width:100%" })).control;
+          let row = (new UI.FormControl(container, 'div',{id:'trancode_section',style:"display:row;width:100%;display: flex;align-items: center;flex-direction: row;" })).control;
 
-          attrs={id: 'trancode',    type: 'text',      value: action.code || '',   placeholder: 'Page',       style: 'width: 100%;'      }
+          attrs={id: 'trancode',    type: 'text',      value: action.code || '',   placeholder: 'TranCode',       style: 'width: 88%;'      }
           new UI.FormControl(row, 'input',attrs);
           events={"click": function(){
             LayoutEditor.SelectEntity("TranCode")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 5%;'}, events)
           events={"click": function(){
             LayoutEditor.OpenEntity("TranCode")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 5%;'}, events)
           new UI.FormControl(container, 'br');
           attrs={for: 'actionpage',innerHTML: 'Page'}
           new UI.FormControl(container, 'label',attrs);
 
-          row = (new UI.FormControl(container, 'div',{id:'actionpage_section',style:"display:row; width:100%" })).control;
-          attrs={id: 'actionpage',    type: 'text',      value: action.page || '',   placeholder: 'Page',       style: 'width: 100%;'      }
+          row = (new UI.FormControl(container, 'div',{id:'actionpage_section',style:"display:row;width:100%;display: flex;align-items: center;flex-direction: row;" })).control;
+          attrs={id: 'actionpage',    type: 'text',      value: action.page || '',   placeholder: 'Page',       style: 'width: 88%;'      }
           new UI.FormControl(row, 'input',attrs);
           events={"click": function(){
             LayoutEditor.SelectEntity("Page")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 5%;'}, events)
           events={"click": function(){
             LayoutEditor.OpenEntity("Page")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 5%;'}, events)
 
 
           new UI.FormControl(container, 'br');
           attrs={for: 'actionpopup',innerHTML: 'Popup View'}
           new UI.FormControl(container, 'label',attrs);
 
-          row = (new UI.FormControl(container, 'div',{id:'actionpopup_section',style:"display:row; width:100%" })).control;
-          attrs={id: 'actionpopup',    type: 'text',      value: action.popupview || '',   placeholder: 'Popup View',       style: 'width: 100%;'      }
+          row = (new UI.FormControl(container, 'div',{id:'actionpopup_section',style:"display:row;width:100%;display: flex;align-items: center;flex-direction: row;" })).control;
+          attrs={id: 'actionpopup',    type: 'text',      value: action.popupview || '',   placeholder: 'Popup View',       style: 'width: 88%;'      }
           new UI.FormControl(row, 'input',attrs);
           events={"click": function(){
             LayoutEditor.SelectEntity("View")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 5%;'}, events)
           events={"click": function(){
             LayoutEditor.OpenEntity("View")
           }}
-          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 50%;'}, events)
+          new UI.FormControl(row, 'li', {class: "fa fa-link",style: 'width: 5%;'}, events)
 
           new UI.FormControl(container, 'br');
 
@@ -1414,14 +1414,14 @@ var LayoutEditor = {
           attrs={for: 'displaytype', innerHTML: 'Display Type', lngcode: 'DisplayType'}
           new UI.FormControl(container, 'label',attrs);
           attrs={
-            attrs:{id: 'displaytype',style: 'width: 100%;'}, selected: action.displaytype || '',
+            attrs:{id: 'displaytype',style: 'width: 100%;'}, selected: action.displaytype || 'None',
             options: [
               {attrs:{value: 'None', innerHTML: 'None', lngcode: 'None'}},
               {attrs:{value: 'Button', innerHTML: 'Button', lngcode: 'Button'}},
               {attrs:{value: 'Tab', innerHTML: 'Tab',lngcode: 'Tab'}}
             ],
           }
-          attrs.selected = action.displaytype || '';
+          attrs.selected = action.displaytype || 'None';
           new UI.Selection(container,attrs);
 
           attrs= {for:'Sequence', innerHTML:'Sequence',lngcode:"Sequence"}
@@ -1594,58 +1594,69 @@ var LayoutEditor = {
           }
 
           let cfg = {
-            "file":"templates/datalist.html", 
-            "name": "Data List", 
-            "type": "document", 
-            "actions": {
-                "MSELECT":{"type": "script", "next": "","page":"","panels":[], "script": "selectitem"},
-                "CANCEL":{"type": "script", "next": "","page":"","panels":[], "script": "cancelitem"},
+            //  "file":"templates/datalist.html", 
+              "name": "Data List", 
+              "type": "document", 
+              "actions": {
+                  "SELECT":{"type": "script", "next": "","page":"","panels":[], "script": "selectitem"},
+                  "CANCEL":{"type": "script", "next": "","page":"","panels":[], "script": "cancelitem"},
+              }
             }
-          }
-          let page =Session.CurrentPage;
-          UI.Log(page)
-          let org_schema = Session.snapshoot.sessionData.ui_dataschema
-          let org_entity = Session.snapshoot.sessionData.entity
-          let org_selectedKey = Session.snapshoot.sessionData.selectedKey
-
-          let inputs = {}
-          inputs.ui_dataschema = schema
-        //    UI.Log(inputs)
-          cfg.inputs = inputs;
-          cfg.actions.MSELECT.script = function(data){
-            UI.Log(data)
-            
-            if(data.length != 1){
-              UI.ShowError("Please select one record");
-              return;
+            let page =Session.CurrentPage;
+            UI.Log(page)
+            let org_schema = Session.snapshoot.sessionData.ui_dataschema
+            let org_entity = Session.snapshoot.sessionData.entity
+            let org_selectedKey = Session.snapshoot.sessionData.selectedKey
+      
+            let inputs = {}
+            inputs.ui_dataschema = schema
+          //    UI.Log(inputs)
+            cfg.inputs = inputs;
+            cfg.onloadedscript = function(){        
+            //  $('#-ui-page-popup-panel .ui_actions_section button[value="Cancel"]').hide()
+              $('#-ui-page-popup-panel .ui_actions_section button[value="Add"]').hide();
+              $('#-ui-page-popup-panel .ui_actions_section button[value="Delete"]').hide();
+              $('#-ui-page-popup-panel .ui_actions_section button[value="Revision"]').hide();
             }
-            let keyvalue = data[0][keyfieldname];
-
-            if(keyvalue ==""){
-              UI.ShowError("Selected record has no key value");
-              return;
+            cfg.actions.SELECT.script = function(data){
+              let table = $('#-ui-page-popup-panel ui-tabulator')[0];
+              let selectedrows = table.Table.getSelectedRows();
+              
+              console.log("selected data:",selectedrows)
+              
+              if(selectedrows.length != 1){
+                UI.ShowError("Please select one record");
+                return;
+              }
+              let keyvalue = (selectedrows[0].getData())[keyfieldname];
+      
+              if(keyvalue ==""){
+                UI.ShowError("Selected record has no key value");
+                return;
+              }
+      
+              UI.Log(keyvalue)
+              field.val(keyvalue);
+              Session.snapshoot.sessionData.ui_dataschema = org_schema;
+              Session.snapshoot.sessionData.selectedKey = org_selectedKey;
+              page.popupClose();              
             }
-
-            UI.Log(keyvalue)
-            field.val(keyvalue);
-            Session.snapshoot.sessionData.ui_dataschema = org_schema;
-            Session.snapshoot.sessionData.selectedKey = org_selectedKey;
-            page.popupClose();              
-          }
-          cfg.actions.CANCEL.script = function(data){
-            UI.Log("execute the action:", data)
-            Session.snapshoot.sessionData.selectedKey = org_selectedKey;
-            Session.snapshoot.sessionData.ui_dataschema = org_schema;
-            page.popupClose();
-          }
-          Session.snapshoot.sessionData.ui_dataschema = schema
-          //UI.Log(cfg)
-          //new UI.View(panel,cfg) 
-          page.popupOpen(cfg);
-          page.popup.onClose(function(){
+            cfg.actions.CANCEL.script = function(data){
+              UI.Log("execute the action:", data)
               Session.snapshoot.sessionData.selectedKey = org_selectedKey;
               Session.snapshoot.sessionData.ui_dataschema = org_schema;
-          })
+              page.popupClose();
+            }
+            Session.snapshoot.sessionData.ui_dataschema = schema
+            //UI.Log(cfg)
+            //new UI.View(panel,cfg) 
+            page.popupOpen(cfg);
+      
+            page.popup.onClose(function(){
+                Session.snapshoot.sessionData.selectedKey = org_selectedKey;
+                Session.snapshoot.sessionData.ui_dataschema = org_schema;
+            })
+      
         },
         OpenEntity: function(entity){
 

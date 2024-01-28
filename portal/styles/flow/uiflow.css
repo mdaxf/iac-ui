@@ -40,13 +40,24 @@ rect[joint-selector="FunctioninputRect"]{
 	font-size: 28px;
 	width: 35px;
 	height: 65px;
-	margin-top:7px;
+	margin-top:3px;
 	margin-bottom:5px;
 	margin-left: 1px;
 	color: #8f8d8d;
 	flex-direction: column;
     align-items: center;
+	justify-content: center;
 /*	border: 1px solid white;  */
+}
+
+.uiflow_process_flow_menubar_container_menubar :hover{
+	display: inline-flex;
+	flex-direction: column;
+    align-items: center;
+	justify-content: center;
+	width: 35px;
+	height: 65px;
+	background-color: hsla(57, 94%, 50%, 0.695);
 }
 
 .uiflow_process_flow_menubar_container_menubar_desc{
@@ -107,6 +118,9 @@ rect[joint-selector="FunctioninputRect"]{
 	content: '\e13a'; 
 }
 
+.uiflow_process_flow_menubar_container .uiflow_menubar_Test:before{
+	content: '\e596'; 
+}
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_Export:before{
 	content: '\f56e'; 
@@ -156,6 +170,10 @@ rect[joint-selector="FunctioninputRect"]{
 
 .uiflow_process_flow_menubar_container .uiflow_menubar_notes:before{
 	content: '\f27a'; 
+}
+
+.uiflow_process_flow_menubar_container .uiflow_menubar_Back:before{
+	content: '\f0a5'; 
 }
 
 .uiflow_process_flow_toolbar_container{

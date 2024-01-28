@@ -57,8 +57,8 @@
 })()
 
 
-var UIFlow = UIFlow || {};
-(function (UIFlow) {
+var UIWorkFlow = UIWorkFlow || {};
+(function (UIWorkFlow) {
   function generateUUID() {
     var d = new Date().getTime();
     var uuid = 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -68,25 +68,25 @@ var UIFlow = UIFlow || {};
     });
     return uuid;
   }
-  UIFlow.generateUUID = generateUUID;
+  UIWorkFlow.generateUUID = generateUUID;
   function safeName(name) {
     return name.replace(/[^a-zA-Z0-9]/g, "_");
   }
-  UIFlow.safeName = safeName;
+  UIWorkFlow.safeName = safeName;
   function safeId(id) {
     return id.replace(/[^a-zA-Z0-9]/g, "_");
   }
-  UIFlow.safeId = safeId;
+  UIWorkFlow.safeId = safeId;
   function safeClass(className) {
     return className.replace(/[^a-zA-Z0-9]/g, "_");
   }
-  UIFlow.safeClass = safeClass;
+  UIWorkFlow.safeClass = safeClass;
   function replaceAll(target, search, replacement) {
     return target.replace(new RegExp(search, "g"), replacement);
   }
-  UIFlow.replaceAll = replaceAll;
+  UIWorkFlow.replaceAll = replaceAll;
 
-})(UIFlow || (UIFlow = {}));
+})(UIWorkFlow || (UIWorkFlow = {}));
 
 
 joint.shapes.workflow = {};
@@ -395,7 +395,7 @@ var WorkFlow = (function () {
       this.flow = flow;
       UI.Log(data,data.id)
       if(!data.id)
-        data.id = UIFlow.generateUUID();
+        data.id = UIWorkFlow.generateUUID();
 
     //  UI.Log(data,data.id)
       this.id = data.id ;
@@ -698,7 +698,7 @@ var WorkFlow = (function () {
       this.flow = flow;
       if(!data || data == null || data == undefined || data == {}){
         data = {
-          id: UIFlow.generateUUID(),
+          id: UIWorkFlow.generateUUID(),
           source: sourceblock.id,
           target: destblock.id,
           Label: ''
@@ -706,7 +706,7 @@ var WorkFlow = (function () {
       }
       
       if(!data.id)
-        data.id = UIFlow.generateUUID();
+        data.id = UIWorkFlow.generateUUID();
       
       this.id = data.id;
       this.data = data;
@@ -801,6 +801,8 @@ var WorkFlow = (function () {
 		}
 		set_events(){
 			$.on(this.menubar, 'click', e => {
+        $('.uiflow_process_flow_menubar_container_menubar.selected').removeClass("selected")
+        this.menubar.classList.add("selected")
 				this.flow.menu_click(this.data); 
 			})
 		}
@@ -1033,7 +1035,7 @@ var WorkFlow = (function () {
       if (this.flowobj.nodes) {
         this.flowobj.nodes.forEach(function (node) {
           if (!node.id)
-            node.id = UIFlow.generateUUID();
+            node.id = UIWorkFlow.generateUUID();
           that.nodes.push(node);
         });
       }
@@ -1044,7 +1046,7 @@ var WorkFlow = (function () {
       if (this.flowobj.links) {
         this.flowobj.links.forEach(function (link) {
           if (!link.id)
-            link.id = UIFlow.generateUUID();
+            link.id = UIWorkFlow.generateUUID();
           that.links.push(link);
         });
       }else
@@ -1244,7 +1246,7 @@ var WorkFlow = (function () {
     add_element(type, evt, x, y) {
       let that = this;
       let node = {
-        id: UIFlow.generateUUID(),
+        id: UIWorkFlow.generateUUID(),
         name: type + "",
         type: type,
         x: x,
@@ -1291,7 +1293,7 @@ var WorkFlow = (function () {
       that.floweditselecteditem =null;
       that.elementresizing = false;
       that.resizeTool.hide();
-      $('.uiflow_process_flow_menubar_container_menubar').removeClass('selected');
+      $('.UIWorkFlow_process_flow_menubar_container_menubar').removeClass('selected');
     }
 
     setup_paperevents() {
@@ -1319,9 +1321,9 @@ var WorkFlow = (function () {
         }
         that.svgZoom.enablePan();
       });
-
-      paper.on('blank:pointerdblclick', function (cellView, evt, x, y) {
-        evt.preventDefault();
+      
+      paper.on('cell:pointerdblclick', function (cellView, evt, x, y) {
+      //  evt.preventDefault();
         that.svgZoom.disablePan();
         that.elementresizing = false;	
         
@@ -1332,7 +1334,7 @@ var WorkFlow = (function () {
         }
         that.svgZoom.enablePan();
       });
-
+      
       paper.on('cell:pointerdown', function (cellView, evt, x, y) {
         if (cellView.model instanceof joint.dia.Element && that.selectedElement == null) {
           that.selectedElement = cellView;
@@ -1398,7 +1400,7 @@ var WorkFlow = (function () {
             target: destblock.id,
             type: 'link',
             name: 'link',
-            id: UIFlow.generateUUID(),
+            id: UIWorkFlow.generateUUID(),
             label: ''
           }
           joint.dia.HighlighterView.remove(that.selectedElement);
@@ -1557,12 +1559,12 @@ var WorkFlow = (function () {
 
       if(data.category == "workflow" && data.type != "select"){
         this.floweditselecteditem = data.type;
-        $('.uiflow_process_flow_menubar_container_menubar').removeClass('selected');
-        $(this.menu_panel).find('.uiflow_menubar_'+data.type).parent().addClass('selected');
+        $('.UIWorkFlow_process_flow_menubar_container_menubar').removeClass('selected');
+        $(this.menu_panel).find('.UIWorkFlow_menubar_'+data.type).parent().addClass('selected');
         return;
       }else{
         this.floweditselecteditem = null;
-        $('.uiflow_process_flow_menubar_container_menubar').removeClass('selected');
+        $('.UIWorkFlow_process_flow_menubar_container_menubar').removeClass('selected');
       }
       if(data.type == "Save"){
         this.save();
@@ -2240,17 +2242,35 @@ var WorkFlow = (function () {
       attrs={ for: 'block_page', innerHTML: 'UI Page', lngcode: 'Page',style:"width:90%;margin:5px"}
 			new UI.FormControl(content, 'label', attrs);
 			new UI.FormControl(content, 'br', {});
+    //  attrs ={type: 'text', id: 'block_page', value: data.page, style:"width:390px;margin:5px"};
+    //  let blockpage =  new UI.FormControl(row,"input", attrs);
 
-      attrs ={type: 'text', id: 'block_page', value: data.page, style:"width:90%;margin:5px"};
-      let blockpage =  new UI.FormControl(content,"input", attrs);
+      let row = (new UI.FormControl(content, 'div',{id:'blockpage_section',style:"display:row;width:100%;display: flex;align-items: center;flex-direction: row;" })).control;
+      let inputwidth = 350;
+      attrs ={type: 'text', id: 'block_page', value: data.page, style:"width:"+inputwidth+"px;margin:5px"};
+      let blockpage =  new UI.FormControl(row,"input", attrs);
+      
+      let plusevents={"click": function(){
+        that.selectEntity("Page")
+      }}
+
+      new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 35px;'}, plusevents)
       new UI.FormControl(content, 'br', {});
 
       attrs={ for: 'block_trancode', innerHTML: 'Business Logic', lngcode: 'Business Logic',style:"width:90%;margin:5px"}
 			new UI.FormControl(content, 'label', attrs);
 			new UI.FormControl(content, 'br', {});
 
-      attrs ={type: 'text', id: 'block_trancde', value: data.trancode, style:"width:90%;margin:5px"};
-      let blocktrancode =  new UI.FormControl(content,"input", attrs);
+      row = (new UI.FormControl(content, 'div',{id:'blockpage_section',style:"display:row;width:100%;display: flex;align-items: center;flex-direction: row;" })).control;
+      inputwidth = 350;
+      attrs ={type: 'text', id: 'block_trancde', value: data.trancode,  style:"width:"+inputwidth+"px;margin:5px"};
+      let blocktrancode =  new UI.FormControl(row,"input", attrs);
+      
+      plusevents={"click": function(){
+        that.selectEntity("TranCode")
+      }}
+      new UI.FormControl(row, 'li', {class: "fa fa-plus",style: 'width: 35px;'}, plusevents)
+      
       new UI.FormControl(content, 'br', {});
 /*
       attrs={ for: 'block_precondition', innerHTML: 'Pre Condition', lngcode: 'Pre Condition',style:"width:90%;margin:5px"}
@@ -2498,6 +2518,7 @@ var WorkFlow = (function () {
       this.property_panel.style.overflowX = 'hidden';
       this.property_panel.style.overflowY = 'auto';
     }
+    
     createToken(value){
       const tokenContainer = document.createElement('div');
       tokenContainer.className = 'iac-ui-multiple-inputs-token';
@@ -2539,6 +2560,95 @@ var WorkFlow = (function () {
       }
     
     }
+    selectEntity(entity){
+      let collectionname = "";
+      let keyfieldname="";
+      let field = "";
+      let schema = "";
+      if(entity == "Page"){
+        collectionname = "UI_Page";
+        keyfieldname = "name";
+        field = $('#block_page')
+        schema = "uipage"
+      }
+      else if(entity == "TranCode"){
+        collectionname = "Transaction_Code";
+        keyfieldname = "trancodename";
+        field = $('#block_trancode')
+        schema = "trancode"
+      }
+      else {
+        UI.ShowError("Not support entity type:"+entity);
+        return;
+      }
+
+      let cfg = {
+      //  "file":"templates/datalist.html", 
+        "name": "Data List", 
+        "type": "document", 
+        "actions": {
+            "SELECT":{"type": "script", "next": "","page":"","panels":[], "script": "selectitem"},
+            "CANCEL":{"type": "script", "next": "","page":"","panels":[], "script": "cancelitem"},
+        }
+      }
+      let page =Session.CurrentPage;
+      UI.Log(page)
+      let org_schema = Session.snapshoot.sessionData.ui_dataschema
+      let org_entity = Session.snapshoot.sessionData.entity
+      let org_selectedKey = Session.snapshoot.sessionData.selectedKey
+
+      let inputs = {}
+      inputs.ui_dataschema = schema
+    //    UI.Log(inputs)
+      cfg.inputs = inputs;
+      cfg.onloadedscript = function(){        
+      //  $('#-ui-page-popup-panel .ui_actions_section button[value="Cancel"]').hide()
+        $('#-ui-page-popup-panel .ui_actions_section button[value="Add"]').hide();
+        $('#-ui-page-popup-panel .ui_actions_section button[value="Delete"]').hide();
+        $('#-ui-page-popup-panel .ui_actions_section button[value="Revision"]').hide();
+      }
+      cfg.actions.SELECT.script = function(data){
+        let table = $('#-ui-page-popup-panel ui-tabulator')[0];
+        let selectedrows = table.Table.getSelectedRows();
+        
+        console.log("selected data:",selectedrows)
+        
+        if(selectedrows.length != 1){
+          UI.ShowError("Please select one record");
+          return;
+        }
+        let keyvalue = (selectedrows[0].getData())[keyfieldname];
+
+        if(keyvalue ==""){
+          UI.ShowError("Selected record has no key value");
+          return;
+        }
+
+        UI.Log(keyvalue)
+        field.val(keyvalue);
+        Session.snapshoot.sessionData.ui_dataschema = org_schema;
+        Session.snapshoot.sessionData.selectedKey = org_selectedKey;
+        page.popupClose();              
+      }
+      cfg.actions.CANCEL.script = function(data){
+        UI.Log("execute the action:", data)
+        Session.snapshoot.sessionData.selectedKey = org_selectedKey;
+        Session.snapshoot.sessionData.ui_dataschema = org_schema;
+        page.popupClose();
+      }
+      Session.snapshoot.sessionData.ui_dataschema = schema
+      //UI.Log(cfg)
+      //new UI.View(panel,cfg) 
+      page.popupOpen(cfg);
+
+      page.popup.onClose(function(){
+          Session.snapshoot.sessionData.selectedKey = org_selectedKey;
+          Session.snapshoot.sessionData.ui_dataschema = org_schema;
+      })
+
+
+    }
+
     trigger_event(event, args) {
       if (this.options['on_' + event]) {
         this.options['on_' + event].apply(null, args);

@@ -28,7 +28,7 @@
           <span id="loginLogo"></span>
 
         </div>
-        <div class="loginform" action="login()">
+        <form class="loginform" action="login()" onsubmit="login()">
           <label for="username" lngcode="UserName">User Name / Badge:</label>
           <input type="text" id="username" name="username">
           <label for="password" lngcode="Password">Password:</label>
@@ -45,7 +45,7 @@
               <button type="button" lngcode="Login" class="ui-primary-btn" onclick="login()">Login</button>
               <button type="button" lngcode="Clear" class="ui-secondary-btn" onclick="clear()">Clear All</button>
           </div>
-      </div>
+        </form>
     </div>
     </div>
     <script>
@@ -59,6 +59,11 @@
             console.log("not logged")
           });
 
+          $(document).keypress(function(e) {
+            if(e.keyCode==13)
+              login();
+          });
+          
           $('#password').keypress(function(e){
             console.log(e.keyCode)
             if(e.keyCode==13)

@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-06/schema#",
     "$ref": "#/definitions/Trancode",
     "datasourcetype": "collection",
-    "datasource": "trancode",
+    "datasource": "Transaction_Code",
     "listfields":["trancodename", "version", "status", "description","firstfuncgroup","_id"],
     "keyfield":"_id",
     "definitions": {
