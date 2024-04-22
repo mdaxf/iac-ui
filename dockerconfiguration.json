@@ -5,8 +5,8 @@
     "description":"IAC is a framework for building web applications with Go.",
     "author":"IAC",
     "singalrconfig":{
-        "serverwc": "ws://127.0.0.1:8222",
-        "server": "http://127.0.0.1:8222",
+        "serverwc": "ws://iac-signalrsrv:8222",
+        "server": "http://iac-signalrsrv:8222",
         "hub": "/iacmessagebus"
     },
     "transaction":{
@@ -14,7 +14,7 @@
     },
     "database":{
         "type":"mysql",        
-        "connection": "user:iacf12345678@tcp(localhost:3306)/iac?timeout=5s",
+        "connection": "user:iacf12345678@tcp(mysql:3306)/iac?timeout=5s",
         "maxidleconns":5,
         "maxopenconns":10,
         "timeout": 5
@@ -23,12 +23,12 @@
         {
             "name": "conn1",
             "type":"mysql",
-            "connection":"user:iacf12345678@tcp(localhost:3306)/iac"
+            "connection":"user:iacf12345678@tcp(mysql:3306)/iac"
         }
     ],
     "documentdb":{
         "type": "mongodb",
-        "connection": "mongodb://localhost:27017",
+        "connection": "mongodb://mongodb:27017",
         "database": "IAC_CFG"
     },
     "webserver":{
@@ -52,7 +52,7 @@
         }
     },
     "appserver":{
-        "url": "http://127.0.0.1:8080",
+        "url": "http://app-server:8080",
         "apikey": "ahbcgj"
     },
     "log":{
@@ -61,13 +61,13 @@
         "performance": true,
         "performancethread": 1,
         "file":{
-            "folder": "c:\\\\temp\\\\iac_loger", 
+            "folder": "/docker-entrypoint-log/", 
             "file": "iac.log",
             "maxlines":10000,
             "maxsize": 1024},
         "console":{},
         "multiplefile":{
-            "folder": "c:\\\\temp\\\\iac_loger", 
+            "folder": "/docker-entrypoint-log/", 
             "file": "iac.log",
             "maxlines":10000,
             "maxsize": 1024,
@@ -101,7 +101,7 @@
             "EmbedExpiry": 120
         },
         "documentdb":{
-            "conn": "mongodb://localhost:27017",
+            "conn": "mongodb://mongodb:27017",
             "db": "IAC_CACHE",
             "collection": "cache"
         }

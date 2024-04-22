@@ -858,6 +858,19 @@ var WorkFlow = (function () {
       this.init(wrapper, options);
     }
     init(wrapper, options) {
+      window.onresize = null;
+      this.svgZoom = null;
+      this.Paper = null
+      this.Graph = null;
+      this.nodes = [];
+      this.links = [];
+      this.blocks = [];
+      this.blocklinks = [];
+
+      $.contextMenu('destroy', '.joint-type-workflow-task, .joint-type-workflow-gateway');
+      $.contextMenu('destroy', '.joint-type-workflow-note');
+      $.contextMenu('destroy', '.joint-paper');
+
       this.setup_wrapper(wrapper);
       this.setup_options(options);
 
@@ -1028,6 +1041,8 @@ var WorkFlow = (function () {
       let that = this;
       this.nodes = [];
       this.links = [];
+      that.nodes = [];
+      that.links = [];
       if (!this.flowobj || this.flowobj == null || this.flowobj == undefined || this.flowobj == {}) {
         return
       }
@@ -1159,17 +1174,24 @@ var WorkFlow = (function () {
       this.svgZoom = null;
       this.Paper = null
       this.Graph = null;
-      this.nodes = null;
-      this.links = null;
-      this.blocks = null;
-      this.blocklinks = null;
+      this.nodes = [];
+      this.links = [];
+      this.blocks = [];
+      this.blocklinks = [];
+      $.contextMenu('destroy', '.joint-type-workflow-task, .joint-type-workflow-gateway');
+      $.contextMenu('destroy', '.joint-type-workflow-note');
+      $.contextMenu('destroy', '.joint-paper');
+
     }
     /**
      * Creates blocks based on the nodes in the workflow.
      */
     make_blocks() {
       let that = this;
+      this.blocks = [];
+      that.blocks = [];
       let blocks = [];
+      console.log("make blocks",this.nodes, blocks)
       if (this.nodes) {
         this.nodes.forEach(function (node) {
           if (node.type == "start") {
@@ -1190,40 +1212,71 @@ var WorkFlow = (function () {
           }
         });
       }
+      console.log("made blocks",blocks, that.flowblocks, that.blocks)
+      that.flowblocks = blocks; 
       that.blocks = blocks;
+      console.log("made blocks",blocks, that.flowblocks, that.blocks)
     }
-    getBlockbyid(id) {
+    getBlockbyid(blocks,id) {
       let block = null;
     //  UI.Log(this.blocks, id)
 
-      let filtered = this.blocks.filter(item => item.id == id);
+      let filtered = blocks.filter(item => item.id == id);
       if (filtered.length > 0)
         block = filtered[0];
-      
+      else {
+        for (var i = 0; i < blocks.length; i++) {
+          if (blocks[i].id == id) {
+            block = blocks[i];
+            break;
+          }
+        }
+      }
    //   UI.Log(block)
       return block;
     }
-    getBlockbyShape(shape){
+    getBlockbyShape(blocks,shape){
       let block = null;
-      let filtered = this.blocks.filter(item => item.shape == shape);
+      let filtered = blocks.filter(item => item.shape == shape);
       if (filtered.length > 0)
         block = filtered[0];
+      else{
+        for(var i=0; i<blocks.length;i++){
+          if(blocks[i].shape == shape){
+            block = blocks[i];
+            break;
+          }
+        }
+      }
       return block;
     }
-    getBlockbymodelid(id) {
+    getBlockbymodelid(blocks,id) {
       let block = null;
-      let filtered = this.blocks.filter(item => item.shape.id == id);
+      let that = this
+      console.log(id, blocks, that.flowblocks)
+      let filtered = that.flowblocks.filter(item => item.shape.id == id);
       if (filtered.length > 0)
         block = filtered[0];
+      else{
+        for(var i=0; i<that.flowblocks.length;i++){
+          if(that.flowblocks[i].shape.id == id){
+            block = that.flowblocks[i];
+            break;
+          }
+        }
+
+      }
       return block;
     }
     make_links() {
       let that = this;
+      this.blocklinks = [];
+      that.blocklinks = [];
       let blocklinks = [];
       if (this.links) {
         this.links.forEach(function (link) {
-          let sourceblock = that.getBlockbyid(link.source);
-          let destblock = that.getBlockbyid(link.target);
+          let sourceblock = that.getBlockbyid(that.blocks,link.source);
+          let destblock = that.getBlockbyid(that.blocks,link.target);
        //   UI.Log(sourceblock, destblock)
           if (sourceblock != null && destblock != null) {
             let blocklink = new blockLink(that, sourceblock, destblock, link);
@@ -1231,7 +1284,7 @@ var WorkFlow = (function () {
           }
         });
       }
-      that.blocklinks = blocklinks;
+      this.blocklinks = blocklinks;
     }
 
     make_Menubar(){
@@ -1371,8 +1424,8 @@ var WorkFlow = (function () {
 
         }else if(cellView.model instanceof joint.dia.Element && that.selectedElement != null && that.selectedElement != cellView){
         //  UI.Log(that, that.selectedElement.model, cellView.model, {})
-          let sourceblock = that.getBlockbyShape(that.selectedElement.model);
-          let destblock = that.getBlockbyShape(cellView.model);
+          let sourceblock = that.getBlockbyShape(that.blocks,that.selectedElement.model);
+          let destblock = that.getBlockbyShape(that.blocks,cellView.model);
 
           if (sourceblock == null || destblock == null){
               UI.ShowError('The link cannot be created. Please check the source and destination blocks.');
@@ -1420,7 +1473,7 @@ var WorkFlow = (function () {
 
       that.resizeTool.on('mousedown', function(evt) {
         var bbox = that.selectedElement.getBBox();
-        let block = that.getBlockbyShape(that.selectedElement.model);
+        let block = that.getBlockbyShape(that.blocks,that.selectedElement.model);
 
         block.isresizing = false;
       //  block.istextediting = false;
@@ -1470,7 +1523,7 @@ var WorkFlow = (function () {
       
       that.textInput.on('blur', function() {
         // Update the text of the element
-        let block = that.getBlockbyShape(that.selectedElement.model);
+        let block = that.getBlockbyShape(that.blocks,that.selectedElement.model);
         var newText = that.textInput.val();
    ///     var element = that.selectedElement.model;
   //      element.attr('text/text', newText);
@@ -1582,6 +1635,7 @@ var WorkFlow = (function () {
 
     setup_contextmenu() {
       let that = this;
+      console.log('setup_contextmenu', that)
       $.contextMenu({
         selector: '.joint-type-standard-link',
         build: function ($triggerElement, e) {
@@ -1691,8 +1745,8 @@ var WorkFlow = (function () {
 					that.disable_paperevents();
 				//	UI.Log('build the contextmenu:',$triggerElement,e,$triggerElement[0].getAttribute('model-id'))
 					let modelid = $triggerElement[0].getAttribute('model-id');
-          let block = that.getBlockbymodelid(modelid);
-          UI.Log(block, modelid)
+          let block = that.getBlockbymodelid(that.blocks,modelid);
+          UI.Log(that.blocks,block, modelid)
 					return{
 						callback: function(key, options,e){
 							UI.Log(key, options,e)
@@ -1741,7 +1795,7 @@ var WorkFlow = (function () {
         build: function ($triggerElement, e) {
           that.disable_paperevents();
           let modelid = $triggerElement[0].getAttribute('model-id');
-          let block = that.getBlockbymodelid(modelid);
+          let block = that.getBlockbymodelid(that.blocks,modelid);
           return {
             callback: function (key, options, e) {
               UI.Log(key, options, e)
@@ -1777,7 +1831,7 @@ var WorkFlow = (function () {
         build: function ($triggerElement, e) {
           that.disable_paperevents();
           let modelid = $triggerElement[0].getAttribute('model-id');
-          let block = that.getBlockbymodelid(modelid);
+          let block = that.getBlockbymodelid(that.blocks,modelid);
           return {
             callback: function (key, options, e) {
               UI.Log(key, options, e)
@@ -2423,7 +2477,7 @@ var WorkFlow = (function () {
 
           for(var i=0;i<data.routingtables.length;i++){
             let routingtable = data.routingtables[i];
-            let targetname = this.getBlockbyid(routingtable.target).data.name;
+            let targetname = this.getBlockbyid(that.blocks,routingtable.target).data.name;
             tabledata.push({sequence:routingtable.sequence, 
                 data:routingtable.data,
                 value:routingtable.value,
@@ -2548,7 +2602,7 @@ var WorkFlow = (function () {
         
           let link = this.links[i];
           let target =link.target;
-          let targetblock = this.getBlockbyid(target);
+          let targetblock = this.getBlockbyid(that.blocks,target);
           targets.push(target);
           targetnames.push(targetblock.data.name);
         }

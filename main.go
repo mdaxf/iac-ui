@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"log"
@@ -25,10 +26,16 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/mdaxf/iac/com"
 	"github.com/mdaxf/iac/config"
-
+	"github.com/mdaxf/iac/health"
 	"github.com/mdaxf/iac/logger"
+)
+
+var (
+	nodedata      map[string]interface{}
+	nodecomponent map[string]interface{}
 )
 
 // main is the entry point of the program.
@@ -41,6 +48,15 @@ import (
 func main() {
 
 	startTime := time.Now()
+	nodecomponent = make(map[string]interface{})
+	nodedata = make(map[string]interface{})
+	nodedata["Name"] = "iac-ui"
+	nodedata["AppID"] = uuid.New().String()
+	nodedata["Description"] = "IAC WebServer"
+	nodedata["Type"] = "WebServer"
+	nodedata["Version"] = "1.0.0"
+	nodedata["StartTime"] = time.Now().UTC()
+	nodedata["Status"] = "Running"
 
 	gconfig, err := config.LoadGlobalConfig()
 
@@ -77,7 +93,8 @@ func main() {
 	proxy.Director = func(req *http.Request) {
 		if !strings.HasPrefix(req.URL.Path, "/portal") &&
 			!strings.HasPrefix(req.URL.Path, "/debug/") &&
-			!strings.HasPrefix(req.URL.Path, "/config/") {
+			!strings.HasPrefix(req.URL.Path, "/config/") &&
+			!strings.HasPrefix(req.URL.Path, "/portalhealth/") {
 			ilog.Debug(req.URL.Path)
 			origDirector(req)
 		}
@@ -114,50 +131,86 @@ func main() {
 		c.JSON(http.StatusOK, debugInfo)
 	})
 
-	if gconfig.WebServerConfig != nil {
-		webserverconfig := gconfig.WebServerConfig
-		ilog.Debug(fmt.Sprintf("Webserver config: %v", webserverconfig))
-
-		paths := webserverconfig["paths"].(map[string]interface{})
-
-		for key, value := range paths {
-			ilog.Debug(fmt.Sprintf("Webserver path: %s configuration: %v", key, value))
-			pathstr := value.(map[string]interface{})
-			path := pathstr["path"].(string)
-			home := pathstr["home"].(string)
-
-			if path != "" {
-				r.Static(fmt.Sprintf("/%s", key), path)
-				ilog.Debug(fmt.Sprintf("Webserver path: /%s with %s", key, path))
-			} else {
-				ilog.Error(fmt.Sprintf("there is error in configuration %s, path cannot be empty!", key))
-			}
-			if home != "" {
-				r.StaticFile(fmt.Sprintf("/%s", key), home)
-			}
+	r.GET("/portalhealth", func(c *gin.Context) {
+		ilog.Debug("Portal Health Check")
+		result, err := CheckServiceStatus(ilog)
+		if err != nil {
+			ilog.Error(fmt.Sprintf("Portal Health Check error: %v", err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
-
-		proxy := webserverconfig["proxy"].(map[string]interface{})
-
-		if proxy != nil {
-			go renderproxy(proxy, r, ilog)
-		}
-
-		headers := webserverconfig["headers"].(map[string]interface{})
-		r.Use(GinMiddleware(headers))
-
-	} else {
-		ilog.Error("There is no configuration of webserver!")
-		panic("There is no configuration of webserver!")
-	}
-
+		c.JSON(http.StatusOK, result)
+	})
 	port := com.ConverttoInt(gconfig.WebServerConfig["port"])
-	// Start the web server
-	r.Run(fmt.Sprintf(":%d", port))
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		if gconfig.WebServerConfig != nil {
+			webserverconfig := gconfig.WebServerConfig
+			ilog.Debug(fmt.Sprintf("Webserver config: %v", webserverconfig))
+
+			paths := webserverconfig["paths"].(map[string]interface{})
+
+			for key, value := range paths {
+				ilog.Debug(fmt.Sprintf("Webserver path: %s configuration: %v", key, value))
+				pathstr := value.(map[string]interface{})
+				path := pathstr["path"].(string)
+				home := pathstr["home"].(string)
+
+				if path != "" {
+					r.Static(fmt.Sprintf("/%s", key), path)
+					ilog.Debug(fmt.Sprintf("Webserver path: /%s with %s", key, path))
+				} else {
+					ilog.Error(fmt.Sprintf("there is error in configuration %s, path cannot be empty!", key))
+				}
+				if home != "" {
+					r.StaticFile(fmt.Sprintf("/%s", key), home)
+				}
+			}
+
+			proxy := webserverconfig["proxy"].(map[string]interface{})
+
+			if proxy != nil {
+				go renderproxy(proxy, r, ilog)
+			}
+
+			headers := webserverconfig["headers"].(map[string]interface{})
+			r.Use(GinMiddleware(headers))
+
+		} else {
+			ilog.Error("There is no configuration of webserver!")
+			panic("There is no configuration of webserver!")
+		}
+
+		// Start the web server
+		r.Run(fmt.Sprintf(":%d", port))
+
+	}()
+
+	hip, err := com.GetHostandIPAddress()
+
+	if err != nil {
+		ilog.Error(fmt.Sprintf("Failed to get host and ip address: %v", err))
+	}
+	for key, value := range hip {
+		nodedata[key] = value
+	}
+	if hip["Host"] != nil {
+		nodedata["healthapi"] = fmt.Sprintf("http://%s:%d/portalhealth", hip["Host"], port)
+	}
+	// Start the heartbeat
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			HeartBeat(ilog, gconfig)
+			time.Sleep(5 * time.Minute)
+		}
+	}()
 
 	elapsed := time.Since(startTime)
 	ilog.PerformanceWithDuration("iac-ui.main", elapsed)
-
+	wg.Wait()
 }
 
 // CORSMiddleware is a middleware function that adds Cross-Origin Resource Sharing (CORS) headers to the HTTP response.
@@ -256,4 +309,45 @@ func initializeloger(gconfig *config.GlobalConfig) error {
 	fmt.Printf("log configuration: %v", gconfig.LogConfig)
 	logger.Init(gconfig.LogConfig)
 	return nil
+}
+
+func HeartBeat(ilog logger.Log, gconfig *config.GlobalConfig) {
+	ilog.Debug("Start HeartBeat for iac-activemq application with appid: " + nodedata["AppID"].(string))
+	appHeartBeatUrl := com.ConverttoString(gconfig.AppServer["url"]) + "/IACComponents/heartbeat"
+	ilog.Debug("HeartBeat URL: " + appHeartBeatUrl)
+
+	result, err := CheckServiceStatus(ilog)
+	if err != nil {
+		ilog.Error(fmt.Sprintf("HeartBeat error: %v", err))
+	}
+
+	data := make(map[string]interface{})
+	data["Node"] = nodedata
+	data["Result"] = result
+	data["timestamp"] = time.Now().UTC()
+	// send the heartbeat to the server
+	headers := make(map[string]string)
+	headers["Content-Type"] = "application/json"
+	headers["Authorization"] = "apikey " + com.ConverttoString(gconfig.AppServer["apikey"])
+
+	response, err := com.CallWebService(appHeartBeatUrl, "POST", data, headers)
+
+	if err != nil {
+		ilog.Error(fmt.Sprintf("HeartBeat error: %v", err))
+		return
+	}
+
+	ilog.Debug(fmt.Sprintf("HeartBeat post response: %v", response))
+}
+
+func CheckServiceStatus(iLog logger.Log) (map[string]interface{}, error) {
+	iLog.Debug("Check ActiveMQ Status")
+
+	result, err := health.CheckWebServerHealth(nodedata)
+	if err != nil {
+		iLog.Error(fmt.Sprintf("Check ActiveMQ Status error: %v", err))
+		return nil, err
+	}
+
+	return result, nil
 }
