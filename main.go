@@ -38,6 +38,10 @@ var (
 	nodecomponent map[string]interface{}
 )
 
+type AllowUrlConfig struct {
+	AllowedPrefixes []string
+}
+
 // main is the entry point of the program.
 // It loads the configuration file, initializes the database connection, and starts the server.
 // It also loads controllers dynamically and statically based on the configuration file.
@@ -83,27 +87,10 @@ func main() {
 	ilog.Debug(fmt.Sprintf("load the app server: %s", appserverstr))
 
 	backendURL, err := url.Parse(appserverstr)
+
 	if err != nil {
 		panic(err)
 	}
-	proxy := httputil.NewSingleHostReverseProxy(backendURL)
-
-	// Modify the Director to exclude requests starting with "/portal"
-	origDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		if !strings.HasPrefix(req.URL.Path, "/portal") &&
-			!strings.HasPrefix(req.URL.Path, "/debug/") &&
-			!strings.HasPrefix(req.URL.Path, "/config/") &&
-			!strings.HasPrefix(req.URL.Path, "/portalhealth/") {
-			ilog.Debug(req.URL.Path)
-			origDirector(req)
-		}
-	}
-
-	// Set up a route to handle all requests
-	r.NoRoute(func(c *gin.Context) {
-		proxy.ServeHTTP(c.Writer, c.Request)
-	})
 
 	clientconfig := make(map[string]interface{})
 	clientconfig["signalrconfig"] = gconfig.SingalRConfig
@@ -141,10 +128,58 @@ func main() {
 		}
 		c.JSON(http.StatusOK, result)
 	})
+
+	proxy := httputil.NewSingleHostReverseProxy(backendURL)
+
+	// Modify the Director to exclude requests starting with "/portal"
+	origDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		if !strings.HasPrefix(req.URL.Path, "/portal") &&
+			!strings.HasPrefix(req.URL.Path, "/debug") &&
+			!strings.HasPrefix(req.URL.Path, "/config") &&
+			!strings.HasPrefix(req.URL.Path, "/portalhealth") &&
+			!strings.HasPrefix(req.URL.Path, "/dashboard") {
+			ilog.Debug(req.URL.Path)
+			origDirector(req)
+		}
+	}
+	/*		allowurlprefixes := []string{"portal", "debug", "config", "portalhealth"}
+
+			WebServerConfig := gconfig.WebServerConfig
+			if WebServerConfig != nil {
+				ilog.Debug(fmt.Sprintf("Webserver config: %v", WebServerConfig))
+				proxycfg := WebServerConfig["proxy"].(map[string]interface{})
+				if proxycfg != nil {
+					ilog.Debug(fmt.Sprintf("Webserver proxy config: %v", proxycfg))
+
+					for key, _ := range proxycfg {
+						allowurlprefixes = append(allowurlprefixes, key)
+					}
+				}
+			}
+
+			ilog.Debug(fmt.Sprintf("Allow URL Prefixes: %v", allowurlprefixes))
+
+			allowurlconfig := &AllowUrlConfig{
+				AllowedPrefixes: allowurlprefixes,
+			}
+
+			ilog.Debug(fmt.Sprintf("Allow URL Config: %v", allowurlconfig))
+
+			proxy.Director = customDirector(allowurlconfig, origDirector)
+
+			ilog.Debug(fmt.Sprintf("Proxy Director: %v", proxy.Director))  */
+	// Set up a route to handle all requests
+	r.NoRoute(func(c *gin.Context) {
+		proxy.ServeHTTP(c.Writer, c.Request)
+	})
+
 	port := com.ConverttoInt(gconfig.WebServerConfig["port"])
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
+		defer wg.Done()
+
 		if gconfig.WebServerConfig != nil {
 			webserverconfig := gconfig.WebServerConfig
 			ilog.Debug(fmt.Sprintf("Webserver config: %v", webserverconfig))
@@ -186,18 +221,26 @@ func main() {
 		r.Run(fmt.Sprintf(":%d", port))
 
 	}()
+	/*wg.Add(1)
+	go func() {
+		defer wg.Done()
+		hip, err := com.GetHostandIPAddress()
 
-	hip, err := com.GetHostandIPAddress()
+		if err != nil {
+			ilog.Error(fmt.Sprintf("Failed to get host and ip address: %v", err))
+		}
+		if hip == nil {
+			ilog.Error("Failed to get host and ip address")
 
-	if err != nil {
-		ilog.Error(fmt.Sprintf("Failed to get host and ip address: %v", err))
-	}
-	for key, value := range hip {
-		nodedata[key] = value
-	}
-	if hip["Host"] != nil {
-		nodedata["healthapi"] = fmt.Sprintf("http://%s:%d/portalhealth", hip["Host"], port)
-	}
+		} else {
+			for key, value := range hip {
+				nodedata[key] = value
+			}
+			if hip["Host"] != nil {
+				nodedata["healthapi"] = fmt.Sprintf("http://%s:%d/portalhealth", hip["Host"], port)
+			}
+		}
+	}()  */
 	// Start the heartbeat
 	wg.Add(1)
 	go func() {
@@ -262,6 +305,26 @@ func GinMiddleware(headers map[string]interface{}) gin.HandlerFunc {
 	}
 }
 
+func customDirector(cfg *AllowUrlConfig, origDirector func(*http.Request)) func(*http.Request) {
+	return func(req *http.Request) {
+		path := req.URL.Path
+		allowed := false
+
+		for _, prefix := range cfg.AllowedPrefixes {
+			if strings.HasPrefix(path, "/"+prefix) {
+				allowed = true
+				break
+			}
+		}
+
+		if allowed {
+
+		} else {
+			origDirector(req)
+		}
+	}
+}
+
 // renderproxy is a function that renders a proxy configuration by creating routes in a gin.Engine instance.
 // It takes a map of proxy configurations and a pointer to a gin.Engine as parameters.
 // Each key-value pair in the proxy map represents a route path and its corresponding target URL.
@@ -279,26 +342,54 @@ func renderproxy(proxy map[string]interface{}, router *gin.Engine, ilog logger.L
 		nextURL, _ := url.Parse((value).(string))
 		ilog.Debug(fmt.Sprintf("renderproxy nextURL: %v", nextURL))
 
-		router.Any(fmt.Sprintf("/%s/*path", key), func(c *gin.Context) {
+		router.Any(fmt.Sprintf("/%s/*proxyPath", key), proxyWithPrefix(value.(string), key))
+		/*	router.Any(fmt.Sprintf("/%s/*path", key), func(c *gin.Context) {
 
-			ilog.Debug(fmt.Sprintf("renderproxy path: %s, target: %s", c.Request.URL.Path, nextURL))
+				ilog.Debug(fmt.Sprintf("renderproxy path: %s, target: %s", c.Request.URL.Path, nextURL))
 
-			proxy := httputil.NewSingleHostReverseProxy(nextURL)
+				proxy := httputil.NewSingleHostReverseProxy(nextURL)
 
-			// Update the headers to allow for SSL redirection
-			//	req := c.Request
-			//	req.URL.Host = nextURL.Host
-			//	req.URL.Scheme = nextURL.Scheme
-			//req.Header["X-Forwarded-Host"] = req.Header["Host"]
+				// Update the headers to allow for SSL redirection
+				//	req := c.Request
+				//	req.URL.Host = nextURL.Host
+				//	req.URL.Scheme = nextURL.Scheme
+				//req.Header["X-Forwarded-Host"] = req.Header["Host"]
 
-			c.Request.URL.Path = c.Param("path")
+				c.Request.URL.Path = c.Param("path")
 
-			ilog.Debug(fmt.Sprintf("request: %v", c.Request))
-			// Note that ServeHttp is non blocking and uses a go routine under the hood
-			proxy.ServeHTTP(c.Writer, c.Request)
+				ilog.Debug(fmt.Sprintf("request: %v", c.Request))
+				// Note that ServeHttp is non blocking and uses a go routine under the hood
+				proxy.ServeHTTP(c.Writer, c.Request)
 
-		})
+			})
+		*/
+	}
+}
 
+func proxyWithPrefix(targetHost string, prefix string) gin.HandlerFunc {
+	targetURL, _ := url.Parse(targetHost)
+	/*proxy := httputil.NewSingleHostReverseProxy(targetURL)
+
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		// Update the request URL to remove the prefix
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, prefix)
+		director(req)
+	}
+	proxy.Director = func(req *http.Request) {
+		// Update the request URL to include the prefix
+		if req.URL.Path == "" {
+			req.URL.Path = prefix
+		} else {
+			req.URL.Path = prefix + req.URL.Path
+		}
+		director(req)
+	} */
+
+	proxy := buildSingleHostProxy(targetURL, false, 5*time.Minute)
+
+	return func(c *gin.Context) {
+		proxy.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
@@ -341,11 +432,11 @@ func HeartBeat(ilog logger.Log, gconfig *config.GlobalConfig) {
 }
 
 func CheckServiceStatus(iLog logger.Log) (map[string]interface{}, error) {
-	iLog.Debug("Check ActiveMQ Status")
+	iLog.Debug("Check webserver Status")
 
 	result, err := health.CheckWebServerHealth(nodedata)
 	if err != nil {
-		iLog.Error(fmt.Sprintf("Check ActiveMQ Status error: %v", err))
+		iLog.Error(fmt.Sprintf("Check web server Status error: %v", err))
 		return nil, err
 	}
 

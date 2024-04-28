@@ -4,8 +4,9 @@ go 1.21.4
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/google/uuid v1.4.0
-	github.com/mdaxf/iac v0.0.0-20240421173856-1ac49e5902fe
+	github.com/google/uuid v1.6.0
+	github.com/mdaxf/iac v0.0.0-20240423040753-e9e197d04325
+	golang.org/x/net v0.24.0
 )
 
 require (
@@ -54,7 +55,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/mdaxf/signalrsrv v0.0.0-20231006234128-8da62fea4b77 // indirect
+	github.com/mdaxf/iac-signalr v0.0.0-20240414021819-7bf0f7ea3eac // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
@@ -77,10 +78,9 @@ require (
 	go.opentelemetry.io/otel v1.20.0 // indirect
 	go.opentelemetry.io/otel/trace v1.20.0 // indirect
 	golang.org/x/arch v0.5.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

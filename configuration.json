@@ -32,7 +32,7 @@
         "database": "IAC_CFG"
     },
     "webserver":{
-        "port": 8000,
+        "port": 8001,
         "timeout": 30,
         "paths":{
             "portal": {                
@@ -40,7 +40,8 @@
                 "home":"portal/uipage.html"}
         },
         "proxy":{
-            "draw": "http://localhost:3000"
+            "dashboard": "http://localhost:3000",
+            "bal": "http://localhost:8000/portal/uipage.html"
         },
         "headers":{
             "Access-Control-Allow-Origin": "*",
