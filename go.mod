@@ -5,7 +5,7 @@ go 1.21.4
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
-	github.com/mdaxf/iac v0.0.0-20240423040753-e9e197d04325
+	github.com/mdaxf/iac v0.0.0-20240429192433-df163abde17e
 	golang.org/x/net v0.24.0
 )
 

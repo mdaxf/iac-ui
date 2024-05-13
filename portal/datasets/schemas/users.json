@@ -188,7 +188,7 @@
                                 } 
                             }
                         }, 
-                        "query": "select roles.Name, roles.Description, user_roles.Permission from user_roles left join roles on user_roles.RoleID = roles.ID where user_roles.UserID = @ID",
+                        
                         "data":{
                             "user_roles":{
                                 "fields": ["Permission", "ID as userroleid"],
@@ -217,7 +217,7 @@
                         "masterschema":"roles",
                         "masterdatafield":"roleid", 
                         
-                        "query": "select menus.Name, menus.Description, menu_roles.ViewOnly from user_roles join menu_roles on user_roles.RoleID = menu_roles.RoleID join menus on menus.id = menu_roles.menuid where user_roles.UserID = @ID",                                             
+                        "query": "select menus.Name, menus.Description, menu_roles.ViewOnly from user_roles join menu_roles on user_roles.RoleID = menu_roles.RoleID join menus on menus.id = menu_roles.menuid where ",                                             
                         "data":{
                             "user_roles":{
                                 "fields": [],

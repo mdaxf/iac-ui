@@ -1,0 +1,173 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/ExtensionValue",
+    "datasourcetype": "table",
+    "datasource": "extension_values",
+    "listfields":["Field","Value","CharValue","EffectiveDate","DiscontinueDate","CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ExtensionID", "ID"],
+    "keyfield":"ID",
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+           "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 1,
+                "fields": [
+                    "Field", 
+                    "Value", 
+                    "CharValue", 
+                    "EffectiveDate",
+                    "DiscontinueDate",
+                    "Active" 
+                ]
+            },
+            {
+                "cols":2,
+                "type": "action",
+                "fields":["save", "cancel"]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        },
+        "Links":{
+ 
+        }
+    },    
+    "definitions": {
+        "ExtensionValue": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                "ID": {
+                    "type": "integer",
+                    "lng":{
+                        "code": "DB_ID",
+                        "default":"ID"
+                    } 
+                },
+                "ExtensionID": {
+                    "type": "integer",                   
+                    "lng":{
+                        "code": "ExtensionID",
+                        "default":"Extension ID"
+                    } 
+                },
+                "Field": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Field",
+                        "default":"Field"
+                    } 
+                },
+                "Value": {
+                    "type": "decimal",
+                    "lng":{
+                        "code": "Value",
+                        "default":"Value"
+                    } 
+                },
+                "CharValue": {
+                    "type": "string",
+                    "lng":{
+                        "code": "CharValue",
+                        "default":"Char Value"
+                    } 
+                },
+                "EffectiveDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "lng":{
+                        "code": "EffectiveDate",
+                        "default":"Effective Date"
+                    } 
+                },
+                "DiscontinueDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "lng":{
+                        "code": "DiscontinueDate",
+                        "default":"Discontinue Date"
+                    } 
+                },
+                "Active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },
+                "workspaceSchema": {
+                    "type": "string",
+                    "lng":{
+                        "code": "workspaceSchema",
+                        "default":"workspace Schema"
+                    } 
+                },                
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "PartNo",
+                "WorkSpaces"
+            ],
+            "unchangable": ["id"],
+            "hidden": ["id"],
+            
+            "title": "Parts Maintenance"
+        }
+    }
+}

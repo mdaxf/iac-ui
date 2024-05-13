@@ -1,0 +1,265 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/PartBOM",
+    "datasourcetype": "table",
+    "datasource": "part_boms",
+    "listfields":["PartNo","Code","Version","Type","Description","IsDefault","EffectiveDate","DiscontinueDate","CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ID"],
+    "keyfield":"ID",
+    "query":"SELECT parts.PartNo, part_boms.* FROM part_boms INNER JOIN parts ON parts.ID = part_boms.PartID",  
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+            "Links":{
+                "lng":{
+                    "code": "Links",
+                    "default":"Links"
+                },
+                "index": 1             
+            },
+            "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 2,
+                "fields": [
+                    {"PartID":{"link": "parts", "schema":"parts", "field": "PartNo", "keyfield":"ID"}}, "dummy",
+                    "Code", "Type", 
+                    "Version", "IsDefault", 
+                    "Description", "dummy",                     
+                    "EffectiveDate", "DiscontinueDate", 
+                    "Active", "workspaceSchema" 
+                ]
+            },
+            {
+                "cols":2,
+                "type": "action",
+                "fields":["save", "cancel"]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        },
+        "Links":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 1,
+                "fields": [
+                    {"Extensions":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ExtensionID": "extension_values.ExtensionID"}
+                        ],
+                        "masterschema": "extensions",
+                        "keyfield": "ExtensionID",
+                        "targetkeyfield": "ExtensionID",
+                        "tablename": "extension_values",
+                        "maintable": "parts",
+                        "maintablekeyfield": "ID",
+                        "schema":"extension_values",
+                        "masterdatafield":"Field",                    
+                        "lng":{
+                            "code": "Extensions",
+                            "default":"Extensions"
+                        },
+                        "actions": ["Add", "Delete"]  
+                    }},
+                    {"Parts":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "part_bom_parts.PartBOMID"}
+                        ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "PartBOMID",
+                        "tablename": "part_bom_parts",
+                        "tablekeyfield": "ID",
+                        "schemakeyfield": "ID",
+                        "schema":"part_bom_parts",                                                      
+                        "lng":{
+                            "code": "BOM_Parts",
+                            "default":"BOM Pats"
+                        }  ,
+                        "actions": ["Add", "Delete"]                     
+                    }}                   
+                ]
+            }]
+        }
+    },    
+    "definitions": {
+        "Part":{
+            "ID": {
+                "type": "integer",
+                "readonly": true,
+                "lng":{
+                    "code": "DB_ID",
+                    "default":"ID"
+                } 
+            },
+            "PartNo": {
+                "type": "string",                   
+                "lng":{
+                    "code": "PartNo",
+                    "default":"Part No"
+                } 
+            }
+        },
+        "PartBOM": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                "ID": {
+                    "type": "integer",
+                    "readonly": true,
+                    "lng":{
+                        "code": "DB_ID",
+                        "default":"ID"
+                    } 
+                },
+                "PartID":{ 
+                    "type": "integer",
+                    "ref": "Part.ID",
+                    "showfield": "PartNo",
+                    "readonly": true,
+                    "lng":{
+                        "code": "PartNo",
+                        "default":"Part No"
+                    } 
+                },
+                "Code": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Code",
+                        "default":"Code"
+                    } 
+                },
+                "Type": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Type",
+                        "default":"Type"
+                    } 
+                },
+                "Version": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Version",
+                        "default":"Version"
+                    } 
+                },
+                "Description": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Description",
+                        "default":"Description"
+                    } 
+                },
+                "IsDefault": {
+                    "type": "boolean",
+                    "lng":{
+                        "code": "IsDefault",
+                        "default":"Default"
+                    } 
+                },
+                "EffectiveDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "lng":{
+                        "code": "EffectiveDate",
+                        "default":"Effective Date"
+                    } 
+                },
+                "DiscontinueDate": {
+                    "type": "string",
+                    "format":"datetime",
+                    "lng":{
+                        "code": "DiscontinueDate",
+                        "default":"Discontinue Date"
+                    } 
+                },
+                "ExtensionID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng":{
+                        "code": "ExtensionID",
+                        "default":"Extension Data"
+                    } 
+                },
+                "Active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },
+                "workspaceSchema": {
+                    "type": "string",
+                    "lng":{
+                        "code": "workspaceSchema",
+                        "default":"workspace Schema"
+                    } 
+                },                
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "PartNo",
+                "WorkSpaces"
+            ],
+            "unchangable": ["id"],
+            "hidden": ["id"],
+            
+            "title": "Part BOMs"
+        }
+    }
+}

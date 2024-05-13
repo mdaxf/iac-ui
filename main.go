@@ -221,7 +221,7 @@ func main() {
 		r.Run(fmt.Sprintf(":%d", port))
 
 	}()
-	/*wg.Add(1)
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		hip, err := com.GetHostandIPAddress()
@@ -240,7 +240,7 @@ func main() {
 				nodedata["healthapi"] = fmt.Sprintf("http://%s:%d/portalhealth", hip["Host"], port)
 			}
 		}
-	}()  */
+	}()
 	// Start the heartbeat
 	wg.Add(1)
 	go func() {
@@ -415,7 +415,10 @@ func HeartBeat(ilog logger.Log, gconfig *config.GlobalConfig) {
 	data := make(map[string]interface{})
 	data["Node"] = nodedata
 	data["Result"] = result
+	data["ServiceStatus"] = make(map[string]interface{})
 	data["timestamp"] = time.Now().UTC()
+
+	ilog.Debug(fmt.Sprintf("HeartBeat data: %v", data))
 	// send the heartbeat to the server
 	headers := make(map[string]string)
 	headers["Content-Type"] = "application/json"

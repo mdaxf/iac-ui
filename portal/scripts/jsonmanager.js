@@ -1085,18 +1085,23 @@ var UI = UI || {};
                             if(fieldvalue.hasOwnProperty("type"))
                                 type = fieldvalue["type"]
                             
-                            if(type == "link" || type == "singlelink"){
+                            if(type == "link" || type == "singlelink" || type == "extensionlink"){
                                 let attrs ={
                                     "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,                                    
                                     "innerHTML": fieldkey,
                                 }
                                 let td = (new UI.FormControl(tr, 'td',{})).control;
                                 let link = (new UI.FormControl(td, "a",attrs)).control;
-                                
+                                // display the child items
                                 if(type == "link")
                                     $(link).click(function(){                                                                     
                                         that.displayhyperlinks(wrapper,fieldvalue,fieldkey);
                                     })
+                                else if(type == "extensionlink"){
+                                    $(link).click(function(){                                                                     
+                                        that.displayextensionlink(wrapper,fieldvalue,fieldkey);
+                                    })
+                                }
                                 else if(type == "singlelink"){
                                     $(link).click(function(){                                                                     
                                         that.displaysubdetail(wrapper,fieldvalue);
@@ -1212,8 +1217,26 @@ var UI = UI || {};
         getdetailsavedata(){
             let that = this
             that.nullvalues = {};
-            $('.ui-json-detail-page-tab-content-container').find('input').each(function(){
+            $('.ui-json-detail-page-tab-content-container').find('input').each(async function(){
                 let key = $(this).attr('data-key');
+
+                if(this.hasAttribute('data-key-value')){
+                    let masterfield = $(this).attr('data-master-field');
+                    let masterkeyfield = $(this).attr('data-master-keyfield');
+                    let tablename = $(this).attr('data-table');
+                    let value = $(this).val();
+                    let divid = $(this).attr('id');
+                    let data =  await that.getmasterdatabykey(masterkeyfield,masterfield,value, tablename)
+                    if ((data == null || data == undefined || data == "" || data == {}) && value !=""){
+                        UI.ShowError("Invalid value for the field")
+                        return;
+                    }
+                    $('#'+divid).attr('data-key-value',data);
+                    that.simpleUpdateNode(key, data);
+                    return;
+                }
+
+                
                 if(this.getAttribute('type') == 'checkbox'){
                     that.simpleUpdateNode(key,this.checked);
                 }else{
@@ -1254,7 +1277,7 @@ var UI = UI || {};
                    let datatype = "string"
                    let lng={};
                    let schemaoptions ={}
-                   
+                   let schemaquery ="";
                    let schemadata = that.jschema.getPropertiesFromSchema(field);
                    let schemaformate ="";
                    let schemareadonly = false;
@@ -1266,7 +1289,9 @@ var UI = UI || {};
                        lng = schemadata.properties["lng"]
                    
                    if(schemadata.properties.hasOwnProperty("options"))
-                       schemaoptions = schemadata.properties["options"] 
+                       schemaoptions = schemadata.properties["options"]
+                   else if(schemadata.properties.hasOwnProperty("query"))
+                        schemaquery = schemadata.properties["query"]
 
                    if(schemadata.properties.hasOwnProperty("readonly"))
                        schemareadonly = schemadata.properties["readonly"]
@@ -1288,9 +1313,11 @@ var UI = UI || {};
                     "styles": "width:100%"
                     }
                    let div = "" ;//(new UI.FormControl(td, 'div',attrs)).control;
+                   let divid =  "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber
+                   let divname = "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber
                    attrs ={
                        lngcode: lngcode,
-                       "for": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                       "for": divid,
                        "innerHTML": lngdefault,
                    }
 
@@ -1307,23 +1334,23 @@ var UI = UI || {};
                        try{
                            if(value == 'true' || value == true)
                                attrs = {
-                                   "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
-                                   "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                                   "name": divname,
+                                   "id":divid,
                                    "type": "checkbox",
                                    "data-key": field,
                                    "checked": true,
                                }
                            else 
                                attrs = {
-                                   "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
-                                   "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                                   "name": divname,
+                                   "id":divid,
                                    "data-key": field,
                                    "type": "checkbox",
                                }
                        }catch(e){
                            attrs = {
-                               "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
-                               "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                               "name": divname,
+                               "id":divid,
                                "data-key": field,
                                "type": "checkbox",
                            }
@@ -1349,9 +1376,9 @@ var UI = UI || {};
                         }
                        if(Array.isArray(values)){
                            if(schemareadonly)
-                               nodeeditablevalue =  '<select class="node_input" '+nullstring+' disabled data-key="'+field+'" id="ui-json-detail-page-tab-content-'+key+'-table-'+i+'-row-'+rows+'-cell-'+cellnumber+'" >'
+                               nodeeditablevalue =  '<select class="node_input" '+nullstring+' disabled data-key="'+field+'" id="'+divid+'" >'
                            else
-                               nodeeditablevalue =  '<select class="node_input" '+nullstring+' data-key="'+field+'" id="ui-json-detail-page-tab-content-'+key+'-table-'+i+'-row-'+rows+'-cell-'+cellnumber+'" >'
+                               nodeeditablevalue =  '<select class="node_input" '+nullstring+' data-key="'+field+'" id="'+divid+'" >'
                            for(var n=0;n<values.length;n++){
                             //   UI.Log(node[key],values[n],optionlngcodes[n], optiondefaults[n])
                                nodeeditablevalue += '<option value="'+values[n]+'" lngcode="'+optionlngcodes[n]+'" '+(value == values[n]? 'selected':'') +' >' + optiondefaults[n] + '</option>'
@@ -1363,8 +1390,8 @@ var UI = UI || {};
                        }
                        else{
                            attrs = {
-                               "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
-                               "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                               "name": divname,
+                               "id":divid,
                                "data-key": field,
                                "value": value,
                            }
@@ -1378,10 +1405,33 @@ var UI = UI || {};
                                control = (new UI.FormControl(div, 'input',attrs)).control;   
                        }         
 
+                   }else if (schemaquery != ""){
+                        if(schemareadonly)
+                            nodeeditablevalue =  '<select class="node_input" '+nullstring+' disabled data-key="'+field+'" id="'+divid+'" >'
+                        else
+                            nodeeditablevalue =  '<select class="node_input" '+nullstring+' data-key="'+field+'" id="'+divid+'" >'
+                        let options = that.getQueryOptions(schemaquery);
+                        for(var n=0;n<options.length;n++){
+                                let optionitem = options[n];
+                                if(typeof optionitem == "object"){
+                                    let optionkey = Object.keys(optionitem)[0];
+                                    let optionvalue = optionitem[optionkey];
+                                    let optiondescription = optionvalue;
+                                    if (Object.keys(optionitem).length > 1)
+                                    {
+                                        optiondescription = optionitem[Object.keys(optionitem)[1]];
+                                    }
+                                    nodeeditablevalue += '<option value="'+optionkey+'" '+(value == optionkey? 'selected':'') +' >' + optiondescription + '</option>'
+                                }else{
+                                    nodeeditablevalue += '<option value="'+optionitem+'" '+(value == optionitem? 'selected':'') +' >' + optionitem + '</option>'
+                                }
+                        }
+                              
+                        nodeeditablevalue += '</select>'
                    }else{
                        attrs = {
-                           "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
-                           "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber,
+                           "name": divname,
+                           "id":divid,
                            "data-key": field,
                            "value": value,
                        }
@@ -1398,26 +1448,45 @@ var UI = UI || {};
                         control.setAttribute('nullvalue', schemanullvalue)
                    }
 
+                   
                    if(linkobj != null){
                         attrs = {
-                            "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber+ "-link",
-                            "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber+ "-link",
+                            "name": divname+ "-link",
+                            "id": divid+ "-link",
                             "data-key": field,
                             "class": "fa-solid fa-link",
                         }
                         if(schemareadonly || !that.allowChanges)
                            attrs["disabled"] = true;
 
+                        let masterfield = "";
+                        if(linkobj.hasOwnProperty("field"))
+                            masterfield = linkobj.field;
+                        let masterkeyfield =""
+                        if(linkobj.hasOwnProperty("keyfield"))
+                            masterkeyfield = linkobj.keyfield;
+
+                        UI.Log(masterfield, masterkeyfield, value, linkobj.link)
+                        if(masterfield != "" && masterkeyfield !="" && masterfield != undefined && masterkeyfield != undefined){
+                            $('#'+divid).attr("data-key-value",value); 
+                            $('#'+divid).attr("data-master-field",masterfield);
+                            $('#'+divid).attr("data-master-keyfield",masterkeyfield);
+                            $('#'+divid).attr("data-table",linkobj.link);
+                            that.getmasterdatabykey(masterfield, masterkeyfield, value, linkobj.link).then(function(data){
+                                $('#'+divid).val(data);
+                            })
+                        }                        
+
                         let link = (new UI.FormControl(div, 'i',attrs)).control;
                         $(link).click(function(){
                             let inputid = $(this).closest('td').find('input').attr('id');
-                            let schema = linkobj.schema;
-                         //   let field = linkobj.field;
-                            that.displaylinkeditem(wrapper,inputid, schema, field);
+                            let schema = linkobj.schema;                           
+                            
+                            that.displaylinkeditem(wrapper,inputid, schema, field, masterfield);
                         })
                         attrs = {
-                            "name": "ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber+ "-unlink",
-                            "id":"ui-json-detail-page-tab-content-"+key+"-table-"+i+"-row-"+rows+"-cell-"+cellnumber+ "-unlink",
+                            "name": divname+ "-unlink",
+                            "id": divid+ "-unlink",
                             "data-key": field,
                             "class": "fa-solid fa-link-slash",
                         }
@@ -1434,8 +1503,45 @@ var UI = UI || {};
                    }
                } 
         }
+        async getmasterdatabykey(showfield, keyfield,keyvalue, tablename){
+
+            if(tablename == "")
+                return;
+
+            let url = '/sqldata/query';
+            let data = {};
+            data.querystr = "select "+showfield+" from "+ tablename + " where "+ keyfield + " = '"+ keyvalue +"'";
+
+            let result = await UI.ajax.post(url,data).then(function(data){
+                let result = JSON.parse(data);
+                if(result.hasOwnProperty("data"))
+                    if(result.data.length > 0)
+                        if(result.data[0].hasOwnProperty(showfield))
+                            return result.data[0][showfield];
+                
+                return "";
+            }).catch((error) => {
+                UI.ShowError(error);
+            });
+            return result;
+        }
+        async getQueryOptions(query){
+            let url = '/sqldata/query';
+            let data = {};
+            data.querystr = query;
+            let result = await UI.ajax.post(url,data).then(function(data){
+                let result = JSON.parse(data);
+                if(result.hasOwnProperty("data"))
+                    return result.data;
+                else
+                    return result;
+            }).catch((error) => {
+                UI.ShowError(error);
+            });
+            return result;
+        }
         // display the field link and unlink icon to show the data list to select
-        displaylinkeditem(wrapper, fieldid, schema, field){
+        displaylinkeditem(wrapper, fieldid, schema, field, masterfield){
          /*   let attrs = {
                 "name": "ui-json-detail-page-linked-item-section",
                 "id": "ui-json-detail-page-linked-item-section",
@@ -1471,7 +1577,15 @@ var UI = UI || {};
             cfg.inputs = inputs;
             cfg.actions.SELECT.script = function(data){
                 UI.Log("execute the action:",field, data)
-                $('#'+fieldid).val(data.selectedKey);
+                if(masterfield != ""){
+                    $('#'+fieldid).val(data.selectedRows[0][masterfield]);
+                    if($('#'+fieldid).is('[data-key-value]')){
+                        $('#'+fieldid).attr('data-key-value',data.selectedKey);
+                    }
+                }
+                else     
+                    $('#'+fieldid).val(data.selectedKey);
+
                 let datakey = $('#'+fieldid).attr('data-key');
                 UI.Log(fieldid, datakey, data.selectedKey)
                 that.simpleUpdateNode(datakey, data.selectedKey);
@@ -1603,6 +1717,152 @@ var UI = UI || {};
                 Session.snapshoot.sessionData.ui_dataschema = org_schema;
             })
         }
+
+        // the link display the extension information for the entity and can add record like as the master data list
+        displayextensionlink(wrapper,fieldvalue, field,){
+            let that = this;
+            let configuration = {};
+            configuration.name = "Children List";
+            configuration.type = "code"
+            if(fieldvalue.hasOwnProperty("lng"))
+                configuration.title = fieldvalue["lng"]["default"] + " List";
+
+            console.log(fieldvalue, field)
+            let panel = {}
+            panel.name = "datalink_content_panel";
+            let view = new UI.View();
+            view.title = this.schema["datasource"] +"_"+field+"__datalinklist";
+            view.name = "IAC Children List"
+            view.type = "document";
+           
+            let inputs={}       
+            
+            let masterschema = "";
+            
+            if (fieldvalue.hasOwnProperty("masterschema"))
+                masterschema = fieldvalue["masterschema"]
+
+            let keyfield ="";
+            if(fieldvalue.hasOwnProperty("keyfield")){
+                keyfield = fieldvalue["keyfield"];
+            }
+            else{
+                UI.Log("There is a no linked keyfield defined.")
+                return;
+            }                
+            let wherestr = "";
+
+            let keyvalue = this.data[keyfield] == undefined ? "": this.data[keyfield];
+            let maintablekeyfield = fieldvalue["maintablekeyfield"];
+            let maintablekeyvalue = this.data[maintablekeyfield] == undefined ? "": this.data[maintablekeyfield];
+            
+            if(masterschema == "extensions" && keyvalue == ""){
+                keyvalue = 0;
+            }
+
+            if(fieldvalue.hasOwnProperty("linkfields")){
+                let linkfields = fieldvalue["linkfields"];
+                
+                for(var i=0;i<linkfields.length;i++){
+                    UI.Log(linkfields[i],keyvalue)
+                    if(linkfields[i].hasOwnProperty(keyfield)){
+                        wherestr += linkfields[i][keyfield] + " = '" + keyvalue + "'";                        
+                    }
+                }
+            }
+            Session.snapshoot.sessionData.iac_pageback_data_update = false;                      
+            let org_ui_dataschema =  Session.snapshoot.sessionData.ui_dataschema
+            let org_ui_condition = Session.snapshoot.sessionData.ui_condition
+            let org_entity = Session.snapshoot.sessionData.entity
+            let org_selectedKey = Session.snapshoot.sessionData.selectedKey
+
+            Session.snapshoot.sessionData.ui_child_dataschema = fieldvalue["schema"]
+            Session.snapshoot.sessionData.ui_condition = wherestr
+
+            inputs.ui_child_dataschema = fieldvalue["schema"]
+            inputs.ui_condition = wherestr
+            inputs.ui_fixedfield = fieldvalue["targetkeyfield"]
+            inputs.ui_fixedvalue = keyvalue
+
+            console.log("displayextensionlink:",inputs)
+            view.inputs = inputs
+            view.outputs = {};
+            view.actions = {};
+            view.actions.NEW = {"type": "script", "next": "SELECT","page":"","panels":[], "script": ""}
+            view.actions.SELECT = {"type": "script", "next": "OPENPAGE","page":"","panels":[], "script": ""}
+            view.actions.OPENPAGE = {"type": "page", "next": "","page":"IAC Child Data Editor"}
+            view.actions.SELECT.script = function(){
+                Session.snapshoot.sessionData.ui_fixedfield = fieldvalue["targetkeyfield"]
+                Session.snapshoot.sessionData.ui_fixedvalue = keyvalue
+            }
+            
+            view.actions.NEW.script = function(){
+                if(keyvalue != 0 && keyvalue != ""){
+                    return;                    
+                }
+                console.log("select action: NEW")
+                if(fieldvalue.hasOwnProperty("masterschema")){
+                    if(fieldvalue["masterschema"] == "extensions"){
+                        // creaet extension record
+                        let data = {}
+                        data["TableName"] = fieldvalue["maintable"]
+                       
+                        let ajax =new UI.Ajax("");
+                        let url = '/sqldata/insert'
+                        data.createdby = "System"
+                        data.createdon = (new Date()).toISOString().slice(0, 19).replace('T', ' ');
+                        data.updatedby = "System"
+                        data.updatedon = (new Date()).toISOString().slice(0, 19).replace('T', ' ');
+                        data.active =1 
+                        let inputs={
+                            "tablename": "extensions",
+                            "data":data
+                        }
+
+                        ajax.post(url,inputs).then((response) => {
+                            data = JSON.parse(response);
+                            data = JSON.parse(data.data); 
+                            UI.Log("The record is created successfully:",data)
+                            let udata = {}
+                            udata["ExtensionID"] = data.id.toString()
+                            let where={}
+                            where[maintablekeyfield] = maintablekeyvalue.toString()
+                            inputs={
+                                "tablename": fieldvalue["maintable"],
+                                "data":udata,
+                                "where": where
+                            }
+                            url = '/sqldata/update'
+                            UI.Log(url,inputs)
+                            ajax.post(url,inputs).then((response) => {
+                                data = JSON.parse(response);
+                                UI.Log("The record is created successfully:", data)
+                            
+                                Session.CurrentPage.Refresh();
+                            }).catch((error) => {
+                                UI.ShowError(error);
+                            });
+                        }).catch((error) => {
+                            UI.ShowError(error);
+                        });
+                    }
+                }            
+            }
+            view.onUnloading(function(){
+                Session.snapshoot.sessionData.ui_dataschema = org_ui_dataschema
+                Session.snapshoot.sessionData.condition = org_condition
+                Session.snapshoot.sessionData.entity = org_entity
+                Session.snapshoot.sessionData.selectedKey = org_selectedKey            
+            })
+            
+            panel.view = view;
+            configuration.panels = [panel];
+
+            UI.Log("display the list screen",configuration,inputs)
+            new UI.Page(configuration);
+
+
+        }
         //display the link section item with the <a > link
         displayhyperlinks(wrapper,fieldvalue, field){
             let that = this;
@@ -1615,6 +1875,7 @@ var UI = UI || {};
             panel.name = "datalink_content_panel";
             let view ={}
             view.title = this.schema["datasource"] +"_"+field+"__datalinklist";
+           
             view.name = "Data Link List"
             view.type = "document";
         //    view.file ="templates/datalinklist.html";
@@ -1625,7 +1886,7 @@ var UI = UI || {};
                 keyfield = fieldvalue["keyfield"];
             }
             else{
-                UI.Log("There is a linked field defined.")
+                UI.Log("There is a no linked keyfield defined.")
                 return;
             }                
 
@@ -1656,7 +1917,7 @@ var UI = UI || {};
             if(that.allowChanges){
                 let actions = {}
                 actions.ADD = {"type": "script", "next": "","page":"","panels":[], "script": "addnewitem"}
-                view.actions = actions;
+                view.actions = actions;     
                 view.actions.ADD.script = function(data){
                     that.displayhyperlinkmaster(wrapper,data);
                 }

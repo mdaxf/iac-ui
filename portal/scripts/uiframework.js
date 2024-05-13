@@ -1509,6 +1509,11 @@ var UI;
                 this.stack.pop();
                 
             }
+            if(this.stack.length == 1){
+                this.stack[0].sessionData ={};
+                this._item = {};
+                return {};
+            }
             this._item = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
            /* if (this._item) {
                 delete this._item.panelViews[UI.Layout.POPUP_PANEL_ID];
@@ -1518,8 +1523,20 @@ var UI;
                 this.model = null;
             } */
         //    // UI.Log(item, this.stack, this._item)
-            if (item != null)
-                this.snapshoot.sessionData = Session.cloneObject(item.sessionData)
+            if (item != null){
+                let update = true;
+                if (item.sessionData != null)
+                    if(item.sessionData.hasOwnProperty("iac_pageback_data_update"))
+                        update = item.sessionData.iac_pageback_data_update;
+                    else
+                        update = true;
+
+                if(update)
+                    this.snapshoot.sessionData = this.joinObject(this.snapshoot.sessionData,item.sessionData)
+                else
+                    this.snapshoot.sessionData = this.cloneObject(item.sessionData);
+            }
+            
             return item;
         }
         pushToStack(stackItem) {
@@ -1531,8 +1548,9 @@ var UI;
                 else
                     this.stack[this.stack.length - 1] = stackItem;
             } */
-            this.stack.push(stackItem);
-            this._item = stackItem;
+            let newitem = this.cloneObject(stackItem);
+            this.stack.push(newitem);
+            this._item = this.cloneObject(stackItem);
         }
         joinSnapshoot(snapshoot) {
             Session.joinObject(this.snapshoot.sessionObject, snapshoot.sessionObject);
@@ -3280,7 +3298,11 @@ function rAFThrottle(func) {
                 }
                 if(!found)
                     this.init();
-            }            
+            }    
+            else if(configuration.type == "code"){
+                Session.pageResponsitory[this.configuration.name] = JSON.parse(JSON.stringify(this.configuration));
+                this.init();
+            }        
             else if(configuration.name && (configuration.file == undefined || configuration.file == "")){
                 this.loadconfig(configuration);
             }

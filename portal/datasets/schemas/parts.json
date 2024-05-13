@@ -1,0 +1,285 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Part",
+    "datasourcetype": "table",
+    "datasource": "parts",
+    "listfields":["PartNo","Revision","RevisionControl","Description","Class","PartGroup","PartFamily","TrackType","StoreType","CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ID"],
+    "keyfield":"ID",
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+            "Links":{
+                "lng":{
+                    "code": "Links",
+                    "default":"Links"
+                },
+                "index": 1             
+            },
+            "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 3,
+                "fields": [
+                    "PartNo", "Revision", "RevisionControl", 
+                    "Description", "dummy","dummy", 
+                    "Class", "PartGroup", "PartFamily", 
+                    "TrackType", "StoreType", "Type", 
+                    "BatchSize",{"Uom":{"link": "uoms", "schema":"uoms", "field": "uom"}} ,"dummy" ,
+                    "CodeFormat", "Active", "workspaceSchema" 
+                ]
+            },
+            {
+                "cols":2,
+                "type": "action",
+                "fields":["save", "cancel"]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        },
+        "Links":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 1,
+                "fields": [
+                    {"Extensions":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ExtensionID": "extension_values.ExtensionID"}
+                        ],
+                        "masterschema": "extensions",
+                        "keyfield": "ExtensionID",
+                        "targetkeyfield": "ExtensionID",
+                        "tablename": "extension_values",
+                        "maintable": "parts",
+                        "maintablekeyfield": "ID",
+                        "schema":"extension_values",
+                        "lng":{
+                            "code": "Extensions",
+                            "default":"Extensions"
+                        },
+                        "actions": ["Add", "Delete"]  
+                    }},
+                    {"BOM":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "part_boms.PartID"}
+                        ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "PartID",
+                        "tablename": "part_boms",
+                        "tablekeyfield": "ID",
+                        "schema":"part_boms",                        
+                        "lng":{
+                            "code": "PartBOMS",
+                            "default":"Part BOMS"
+                        }  ,
+                        "actions": ["Add", "Delete"]                     
+                    }}                   
+                ]
+            }]
+        }
+    },    
+    "definitions": {
+        "Part": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                "ID": {
+                    "type": "integer",
+                    "lng":{
+                        "code": "DB_ID",
+                        "default":"ID"
+                    } 
+                },
+                "PartNo": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "PartNo",
+                        "default":"Part No"
+                    } 
+                },
+                "Revision": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Revision",
+                        "default":"Revision"
+                    } 
+                },
+                "RevisionControl": {
+                    "type": "boolean",
+                    "lng":{
+                        "code": "RevisionControl",
+                        "default":"Revision Control"
+                    } 
+                },
+                "Description": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Description",
+                        "default":"Description"
+                    } 
+                },
+                "Class": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Class",
+                        "default":"Class"
+                    } 
+                },
+                "PartGroup": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Group",
+                        "default":"Group"
+                    } 
+                },
+                "PartFamily": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Family",
+                        "default":"Family"
+                    } 
+                },
+                "TrackType": {
+                    "type": "integer",
+                    "options":{
+                        "value": [0, 1,2,3],
+                        "lngcode":["Bulk","Serialized", "SerializedWithBatch", "Batch"],
+                        "default": ["Bulk","Serialized", "SerializedWithBatch", "Batch"]
+                     } ,
+                    "lng":{
+                        "code": "TrackType",
+                        "default":"Track Type"
+                    } 
+                },
+                "StoreType": {
+                    "type": "integer",
+                    "lng":{
+                        "code": "StoreType",
+                        "default":"Store Type"
+                    } 
+                },
+                "Type": {
+                    "type": "integer",
+                    "options":{
+                        "value": [0,1,2,3,4,5,6,7],
+                        "lngcode":["Material","Built", "Mixed", "Phatom", "Kit", "SubAssembly", "Assembly", "Service"],
+                        "default": ["Material","Built", "Mixed", "Phatom", "Kit", "SubAssembly", "Assembly", "Service"]
+                     },
+                    "lng":{
+                        "code": "Type",
+                        "default":"Type"
+                    } 
+                },
+                "Uom": {
+                    "type": "string",
+                    "query": "select uom from uoms",
+                    "lng":{
+                        "code": "Uom",
+                        "default":"Uom"
+                    } 
+                },
+                "BatchSize": {
+                    "type": "decimal",
+                    "lng":{
+                        "code": "BatchSize",
+                        "default":"Batch Size"
+                    } 
+                },
+                "CodeFormat": {
+                    "type": "string",
+                    "lng":{
+                        "code": "CodeFormat",
+                        "default":"Code Format"
+                    } 
+                },
+                "ExtensionID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng":{
+                        "code": "ExtensionID",
+                        "default":"Extension Data"
+                    } 
+                },
+                "Active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },
+                "workspaceSchema": {
+                    "type": "string",
+                    "lng":{
+                        "code": "workspaceSchema",
+                        "default":"workspace Schema"
+                    } 
+                },                
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "PartNo",
+                "WorkSpaces"
+            ],
+            "unchangable": ["id"],
+            "hidden": ["id"],
+            
+            "title": "Parts Maintenance"
+        }
+    }
+}

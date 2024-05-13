@@ -153,7 +153,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
                 UI.Log("language code translation completed")
             });
         }
-    }
+    }    
     loaddatabyschema(){
         let that = this;
         let ajax = new UI.Ajax("");
@@ -198,9 +198,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
               data[listfields[i]] = 1;
           }
           let jdataschema =new UI.JSONSchema(schema)
-          //    console.log(jdataschema)
-  
-          
+          //    console.log(jdataschema)        
               
           let fieldpropertiesobj = {};
           for(var i=0;i<listfields.length;i++){
