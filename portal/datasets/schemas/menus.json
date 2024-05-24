@@ -34,8 +34,8 @@
                 {"cols":3,
                 "fields":[
                     "name", "Description", "LngCode",
-                    "PageType", {"ParentID":{"link": "menus", "schema":"menus", "field": "ID"}}, "dummy",
-                    "Page","Icon", "dummy",
+                    "PageType", {"ParentID":{"link": "menus", "schema":"menus", "field":"Name","keyfield": "ID"}}, "dummy",
+                    {"Page":{"link":"uipage", "schema":"uipage", "field":"name"}},"Icon", "dummy",
                     "Inputs", "Position", "dummy",
                     "MenuShow",  "Mobile", "Desktop"
                 ]                  

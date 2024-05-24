@@ -238,7 +238,6 @@ ShadowViewport.prototype.init = function(viewport, options) {
   // Process CTM
   var newCTM = this.processCTM();
 
- // console.log("Initial CTM", newCTM, "for viewport", this.viewport, this);
   // Update viewport CTM and cache zoom and pan
   this.setCTM(newCTM);
 
@@ -315,20 +314,9 @@ ShadowViewport.prototype.getViewBox = function() {
  */
 ShadowViewport.prototype.processCTM = function() {
   var newCTM = this.getCTM();
-  //console.log("Processing CTM", newCTM, "for viewport", this.viewBox, this.options);
+
   if (this.options.fit || this.options.contain) {
     var newScale;
-
-    if(this.viewBox.width ==0)
-      this.viewBox.width = 1000;
-    if(this.viewBox.height ==0)
-      this.viewBox.height = 800;
-
-    if(this.options.width == 0)
-      this.options.width = 1000;
-    if(this.options.height == 0)
-      this.options.height = 800;
-
     if (this.options.fit) {
       newScale = Math.min(
         this.options.width / this.viewBox.width,
@@ -340,9 +328,7 @@ ShadowViewport.prototype.processCTM = function() {
         this.options.height / this.viewBox.height
       );
     }
-    if(newScale == NaN){
-      newScale = 1;
-    }
+
     newCTM.a = newScale; //x-scale
     newCTM.d = newScale; //y-scale
     newCTM.e = -this.viewBox.x * newScale; //x-transform
@@ -568,7 +554,6 @@ ShadowViewport.prototype.updateCTM = function() {
   var ctm = this.getCTM();
 
   // Updates SVG element
- // console.log("Updating CTM", this.viewport, ctm, this.defs);
   SvgUtils.setCTM(this.viewport, ctm, this.defs);
 
   // Free the lock
@@ -1745,7 +1730,7 @@ module.exports = {
         "," +
         matrix.f +
         ")";
-   // console.log("setCTM", element, matrix, defs);
+
     element.setAttributeNS(null, "transform", s);
     if ("transform" in element.style) {
       element.style.transform = s;

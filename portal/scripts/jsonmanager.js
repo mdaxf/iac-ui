@@ -906,7 +906,8 @@ var UI = UI || {};
             let that = this;
             let attrs ={};
             let srcdata = this.jschema.getdatadetail();
-            
+            let detailpagetabs= [];
+
             if(srcdata == null && srcdata =={})
                 return;
 
@@ -915,7 +916,7 @@ var UI = UI || {};
 
             let data = srcdata['detailpage'];
             let defaulttab ="";
-
+            // build the detail page tabs
             if(data.hasOwnProperty("tabs")){
                 attrs={
                     "name": "ui-json-detail-page-tabs",
@@ -928,6 +929,8 @@ var UI = UI || {};
                 let tabs = (new UI.FormControl(wrapper, 'div',attrs)).control;
 
                 let tabitems = data['tabs']
+                
+
                 for(const key in tabitems){
                     if(defaulttab == "")
                         defaulttab = key
@@ -935,6 +938,49 @@ var UI = UI || {};
                     let item = tabitems[key]; 
                     let lngcode =""
                     let lngdefault = key
+
+                    // if the available condition is not met, skip the tab
+                    if(item.hasOwnProperty("available")){
+                        let availableobj = item['available']
+                        let condition = true;
+                        for (const akey in availableobj){
+                            let itemvalue = that.data[akey] 
+                            let availablevalue = availableobj[akey]
+                            for(const avalue in availablevalue){
+                                let v = availablevalue[avalue]
+                                if(avalue == "!=" && itemvalue == v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == "$ne" && itemvalue == v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == "==" && itemvalue != v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == "$e" && itemvalue != v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == ">" && itemvalue <= v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == ">=" && itemvalue < v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == "<" && itemvalue >= v){
+                                    condition = false;
+                                    break;
+                                }else if(avalue == "<=" && itemvalue > v){
+                                    condition = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if(!condition)
+                            continue;
+                    }
+                    
+                    detailpagetabs.push(key)
+
                     if(item.hasOwnProperty("lng"))
                     {
                         let lng = item['lng']
@@ -965,12 +1011,19 @@ var UI = UI || {};
                             $('#'+id).addClass('ui-json-detail-page-tab-active');
                             $('.ui-json-detail-page-tab-content').hide();
                             $('.ui-json-detail-page-tab-content[tab-key="'+tabkey +'"]').show();
+
+                            if(tabkey == defaulttab)
+                                $('.ui_actions_section').show();
+                            else 
+                                $('.ui_actions_section').hide();
+                            
                         }
                     }
                     let tab = (new UI.FormControl(tabs, 'div',attrs,events)).control;
                 }
                 
             }
+            // build the action bar: save, cancel
             let actionbar = (new UI.FormControl(wrapper, 'div',{"style":"display:inline-block;height:30px; float:right", "class": "ui_actions_section"})).control;
 
             let events={}
@@ -1018,10 +1071,22 @@ var UI = UI || {};
             }
             let tabcontent = (new UI.FormControl(wrapper, 'div',attrs)).control;
 
+            // build the tab content 
+
             for(const key in data){
                 if(key == "tabs" || key == "Query")
                     continue;
                 
+                // check if the tab available condition is met
+                let condition = false;
+                for(var i=0;i<detailpagetabs.length;i++){
+                    if(detailpagetabs[i] == key)
+                        condition = true;
+                }
+                // if the available condition is not met, skip the tab
+                if(!condition)
+                    continue;
+
                 let item = data[key];
 
                 attrs = {
@@ -1038,6 +1103,16 @@ var UI = UI || {};
                     attrs["style"] = "width:100%;height:100%;display:none;"
 
                 let tabcontentitem = (new UI.FormControl(tabcontent, 'div',attrs)).control;
+
+                if(item.hasOwnProperty("type")){
+                    if(item["type"] == "extensionlink"){
+                        that.renderextensionlinkcontent(tabcontentitem, item)   
+                    }
+                    else if(item["type"] == "view"){
+                        that.renderviewcontent(wrapper,tabcontentitem, item) 
+                    }
+                    continue;
+                }
 
                 let tables = item["tables"]
             //    UI.Log(tables)
@@ -1217,22 +1292,41 @@ var UI = UI || {};
         getdetailsavedata(){
             let that = this
             that.nullvalues = {};
+            let properties = that.schemaRootNode.properties
+            for(const key in properties){
+                let node = properties[key]
+                if(node.hasOwnProperty("nullvalue")){
+                    that.nullvalues[key] = node["nullvalue"]
+                }
+            }
+
             $('.ui-json-detail-page-tab-content-container').find('input').each(async function(){
                 let key = $(this).attr('data-key');
+                if($(this).hasAttribute('nullvalue')){
+                    that.nullvalues[key] =   $(this).attr("nullvalue")   
+                }
 
                 if(this.hasAttribute('data-key-value')){
                     let masterfield = $(this).attr('data-master-field');
                     let masterkeyfield = $(this).attr('data-master-keyfield');
                     let tablename = $(this).attr('data-table');
                     let value = $(this).val();
-                    let divid = $(this).attr('id');
+                    let divid = $(this).attr('id');                    
+                    
                     let data =  await that.getmasterdatabykey(masterkeyfield,masterfield,value, tablename)
                     if ((data == null || data == undefined || data == "" || data == {}) && value !=""){
                         UI.ShowError("Invalid value for the field")
                         return;
                     }
-                    $('#'+divid).attr('data-key-value',data);
-                    that.simpleUpdateNode(key, data);
+                    if($(this).hasAttribute('nullvalue') && (data == null || data == undefined || data== $(this).attr('nullvalue'))){
+                        $('#'+divid).attr('data-key-value',$(this).attr('nullvalue'));
+                        that.simpleUpdateNode(key, $(this).attr('nullvalue'));
+                    }else{
+                        $('#'+divid).attr('data-key-value',data);
+                        that.simpleUpdateNode(key, data);
+                    }
+  
+                   
                     return;
                 }
 
@@ -1472,9 +1566,13 @@ var UI = UI || {};
                             $('#'+divid).attr("data-master-field",masterfield);
                             $('#'+divid).attr("data-master-keyfield",masterkeyfield);
                             $('#'+divid).attr("data-table",linkobj.link);
-                            that.getmasterdatabykey(masterfield, masterkeyfield, value, linkobj.link).then(function(data){
-                                $('#'+divid).val(data);
-                            })
+                            if(setnullvalue && value == schemanullvalue){
+                                $('#'+divid).val('');
+                            }else{
+                                that.getmasterdatabykey(masterfield, masterkeyfield, value, linkobj.link).then(function(data){
+                                    $('#'+divid).val(data);
+                                })
+                            }
                         }                        
 
                         let link = (new UI.FormControl(div, 'i',attrs)).control;
@@ -1717,7 +1815,127 @@ var UI = UI || {};
                 Session.snapshoot.sessionData.ui_dataschema = org_schema;
             })
         }
+        //display the view
+        renderviewcontent(wrapper,tabcontentitem,item){
+            let that = this
+            let views = item["views"]
+            if(!views) 
+                return;
+            
+            let showtype = "view"
 
+            let viewname = "";
+            let parameters ={};
+            for(var i=0;i<views.length;i++){
+                let viewobject = views[i]
+                let viewobjconditions = []
+                if(viewobject.hasOwnProperty("condition"))
+                    viewobjconditions = viewobject["condition"]
+                UI.Log("check view condition",viewobjconditions)
+                let available = true;
+                if(viewobjconditions){
+                    for(var j=0;j<viewobjconditions.length;j++){
+                        let viewobjcondition = viewobjconditions[j]
+                        UI.Log("check view condition",viewobjcondition)
+                        for(const key in viewobjcondition){
+                            let value = that.data[key]
+                            let valueobj = viewobjcondition[key]
+                            UI.Log("check value condition",viewobjcondition,key, value, valueobj)
+                            for(const akey in valueobj){
+                                let akeyvalue = valueobj[akey]
+                                UI.Log("check value condition",akey, akeyvalue, value)
+                                if(akeyvalue == null || akeyvalue == undefined)
+                                    akeyvalue = 0
+                                if(akey == "$ne" && akeyvalue == value)
+                                    available = false
+                                else if(akey == "$e" && akeyvalue != value)
+                                    available = false
+                                else if(akey == "!=" && akeyvalue == value)
+                                    available = false
+                                else if(akey == "==" && akeyvalue != value)
+                                    available = false
+                                else if(akey == ">" && akeyvalue >= value)
+                                    available = false
+                                else if(akey == "<" && akeyvalue <= value)
+                                    available = false
+
+                                UI.Log("check value condition result",akey, akeyvalue, value, available)
+                            }
+                        }
+                    }
+                }
+                
+                if(available)
+                {
+                    showtype = viewobject["type"]
+                    viewname = viewobject["name"]
+                    parameters = viewobject["parameters"]
+                    break;
+                }
+            }
+
+            if( viewname =="")
+                return;
+
+            // convert the parameters with the data
+            for(const key in parameters){
+                if(typeof parameters[key] == "object"){
+                    let pobj = parameters[key]
+                    for(const akey in pobj){
+                        parameters[key] = that.data[akey]
+                        break;
+                    }
+                }
+            }
+            // display the view or page
+
+            let html = "";
+ 
+            if(showtype == "page"){
+                html = '<ui-page style="width:100%;height:100%;" pagename="' + viewname + '" parameters=' +"'" + JSON.stringify(parameters) +"'"+' />'   
+            }else 
+                html = '<ui-view style="width:100%;height:100%;" viewname="' + viewname + '" parameters=' +"'" + JSON.stringify(parameters) +"'"+' />'
+
+            tabcontentitem.innerHTML = html;
+        }
+        //display the extension link content to the detail page as a view
+        renderextensionlinkcontent(tabcontentitem, item){
+            let that = this;
+            let schema = item["schema"];
+            let query = item["query"];
+
+            if(query == undefined || query == "")
+                return;
+
+            let url = '/sqldata/query';
+            let data = {};
+            data.querystr = query;
+            let wherestr = "";
+            if(item.hasOwnProperty("linkfields")){
+                let linkfields = item["linkfields"];
+                
+                for(var i=0;i<linkfields.length;i++){
+                   for(const key in linkfields[i]){
+                       if (wherestr != "" )
+                            wherestr += " and ";
+                    
+                       wherestr += linkfields[i][key] + "='"+that.data[key]+"'";
+                   }                    
+                }
+            }
+
+            if(wherestr != "")
+                data.querystr += " where " + wherestr;
+
+            let html = "";
+            if (item.hasOwnProperty("schema")){
+                let schema = item["schema"];
+                html = '<ui-tabulator style="width:100%;height:100%;" schema="'+schema+'"  condition="'+wherestr+'"></ui-tabulator>';
+            }else 
+                html = '<ui-tabulator style="width:100%;height:100%;" query="'+data.querystr+'"></ui-tabulator>';
+            tabcontentitem.innerHTML = html;
+  
+        }
         // the link display the extension information for the entity and can add record like as the master data list
         displayextensionlink(wrapper,fieldvalue, field,){
             let that = this;

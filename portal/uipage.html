@@ -28,6 +28,8 @@
             const myParam = urlParams.get('page');
             const mode = urlParams.get('mode');
             const pagecfg = urlParams.get('cfg');
+            const parameters = urlParams.get('parameters');
+            const headerless = urlParams.get('headerless');
             let loginprocess = false;
             if(myParam == null || !myParam.endsWith("logon.json")){
                 
@@ -43,9 +45,33 @@
                         if (myParam != null) {
                             if(myParam.endsWith(".json"))
                                 UI.startpage('pages/'+myParam);
-                            else
-                                new UI.Page({"name": myParam})
+                            else{
+                                let immediateData = {};
+                                let cfgheadless = false;
+                                if(parameters != null){
+                                    immediateData = JSON.parse(parameters);
+                                }
+                                if(headerless != null){
+                                    cfgheadless = headerless;
+                                }
+                                let configuration = {
+                                    "name": myParam, 
+                                    "immediateData": immediateData, 
+                                    "headerless": cfgheadless
+                                }; 
+
+                                new UI.Page(configuration)
+                            }
                             // UI.startpage('pages/'+myParam + ".json");
+                        }else if(pagecfg != null){
+                            try{                 
+                                //  JSON.stringify 
+                                UI.Log(pagecfg)             
+                                configuration = JSON.parse(pagecfg)
+                                new UI.Page(configuration)
+                            }catch(e){
+                                UI.ShowError(e)
+                            }
                         }else if (mode == "debug"){
                             window.addEventListener("message", iac_ui_page_handleparentmessage, false);
                             /*

@@ -1,0 +1,752 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/Order",
+    "datasourcetype": "table",
+    "datasource": "orders",
+    "listfields":["OrderNo","OrderType","PartNo","OrderQuantity","Uom","Status","CreatedBy", "CreatedOn", "UpdatedBy","UpdatedOn", "ID"],
+    "keyfield":"ID",
+    "query": "Select parts.PartNo,OrderNo,OrderType,OrderQuantity,orders.Uom,Status,orders.CreatedBy,orders.CreatedOn,orders.UpdatedBy,orders.UpdatedOn,orders.ID from orders Left Join parts on orders.PartID = parts.ID",
+    "detailpage":{
+        "tabs": {
+            "General": {
+                "lng":{
+                    "code": "General",
+                    "default":"General"
+                },
+                "index": 0 
+            },
+            "Links":{
+                "lng":{
+                    "code": "Links",
+                    "default":"Links"
+                },
+                "index": 1             
+            },
+            "ManageWorkFlow":{
+                "available":{"ID": 
+                    {"$ne": 0}
+                },
+                "lng":{
+                    "code": "WorkFlow",
+                    "default":"Work Flow"
+                },
+                "index": 1     
+            },
+            "ProductionWorkFlow":{
+                "available":{"ID": 
+                    {"$ne": 0}
+                },
+                "lng":{
+                    "code": "ProcessFlow",
+                    "default":"Process Flow"
+                },
+                "index": 1     
+            },
+            "Details":{
+                "available":{"ID": 
+                    {"$ne": 0}
+                },
+                "lng":{
+                    "code": "OrderDetails",
+                    "default":"Order Details"
+                },
+                "index": 1     
+            },
+            "Histories":{
+                "available":{"ID": 
+                    {"$ne": 0}
+                },
+                "lng":{
+                    "code": "OrderHistories",
+                    "default":"Order Histories"
+                },
+                "index": 1     
+            },
+            "System": {
+                "lng":{
+                    "code": "System",
+                    "default":"System"
+                },
+                "index": 4 
+            }
+        },
+        "General":{
+            "tables": [{
+                "cols": 4,
+                "fields": [
+                    "OrderNo", "OrderType", "Status", "ProgressStatus",
+                    "Description", "dummy","dummy", "dummy", 
+                    {"PartID": {"link": "parts", "schema":"parts", "field":"PartNo","keyfield": "ID"}}, "OrderQuantity", {"Uom":{"link": "uoms", "schema":"uoms", "field": "uom"}} , "dummy", 
+                    {"GroupOrderID":{"link": "orders", "schema":"orders", "field": "OrderNo", "keyfield":"ID"}} , {"ParentOrderID":{"link": "orders", "schema":"orders", "field": "OrderNo", "keyfield":"ID"}}, "ExternalOrderNo", "ExternalSystem", 
+                    {"Factory":{"link": "factories", "schema":"factories", "field": "Name"}},{"LineNo":{"link": "lines", "schema":"lines", "field": "Name"}} ,"dummy" ,"dummy" ,
+                    "Project", "TaskName", "dummy","dummy" ,
+                    "Location", "StageLocation", "FGLocation","dummy",
+                    "ScheduledStartDate", "ScheduledCompletedDate", "ActualStartDate", "ActualCompletedDate",
+                    "DueDate", "LastStartDateTime", "DurationSeconds", "ActualDurationSeconds",
+                    "Active" 
+                ]
+            },
+            {
+                "cols":2,
+                "type": "action",
+                "fields":["save", "cancel"]
+            }
+        ]
+        },
+        "System":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 2,
+                "fields":["createdby", "createdon", "updatedby", "updatedon"]
+            }]
+        },
+        "Details":{
+            "type": "extensionlink",
+            "linkfields": [
+                {"ID": "order_details.OrderID"}
+             ],
+            "query": "Select * from order_details",
+            "keyfield": "ID",
+            "targetkeyfield": "OrderID",
+            "tablename": "order_details",
+            "tablekeyfield": "ID",
+            "schema":"order_details",                        
+            "lng":{
+                "code": "OrderDetails",
+                "default":"Order Details"
+            }  ,
+            "actions": ["Add", "Delete"]     
+        },
+        "History":{
+            "type": "extensionlink",
+            "linkfields": [
+                {"ID": "order_histories.ID"}
+             ],
+            "query": "Select * from order_histories",
+            "keyfield": "ID",
+            "targetkeyfield": "OrderID",
+            "tablename": "order_histories",
+            "tablekeyfield": "ID",
+            "schema":"order_histories",                        
+            "lng":{
+                "code": "OrderHistory",
+                "default":"Order History"
+            }  ,
+            "actions": ["Add", "Delete"]     
+        },
+        "ManageWorkFlow":{
+            "type": "view",
+            "views": [{"name":"IAC_Workflow_TasksbyEntity", 
+                        "condition":[{"ManageWorkFlowEntityID":{">":0}}], 
+                        "type": "page",
+                        "parameters":{                           
+                            "selectedKey": {"ManageWorkFlowEntityID":""},
+                            "selectedwfuuid": "",
+                            "selectedName":"manage work flow"
+                    }},
+                    {   "name":"IAC_WorkFlow_Entitie_Add", 
+                        "condition":{"ManageWorkFlowEntityID":{"=":0}}, 
+                        "parameters":{
+                        "workflow_entitytype": "order",
+                        "workflow_entity_Table":"orders",
+                        "workflow_entity_masterKeyID": {"ID":""},
+                        "workflow_entity_data":{ "OrderNo": ""},
+                        "workflow_entity_masterKeyField": "ManageWorkFlowEntityID"
+                    }}
+                    
+                    ],
+            "schema":"workflow_entities",
+            "parameters":{
+                "ID": "ManageWorkFlowEntityID"
+            }
+        },
+        "ProductionWorkFlow":{
+            "type": "view",
+            "views": [{"name":"IAC_Workflow_TasksbyEntity", 
+                        "condition":[{"ProductionWorkFlowID":{">":0}}], 
+                        "type": "page",
+                        "parameters":{                           
+                            "selectedKey": {"ProductionWorkFlowID":""},
+                            "selectedwfuuid": "",
+                            "selectedName":"manage work flow"
+                    }},
+                    {   "name":"IAC_WorkFlow_Entitie_Add", 
+                        "condition":{"ProductionWorkFlowID":{"=":0}}, 
+                        "parameters":{
+                        "workflow_entitytype": "order",
+                        "workflow_entity_Table":"orders",
+                        "workflow_entity_masterKeyID": {"ID":""},
+                        "workflow_entity_data":{ "OrderNo": ""},
+                        "workflow_entity_masterKeyField": "ProductionWorkFlowID"
+                    }}
+                    
+                    ],
+            "schema":"workflow_entities",
+            "parameters":{
+                "ID": "ProductionWorkFlowID"
+            }
+        },        
+        "Links":{
+            "tables": [{
+                "style":"display: flex;flex-direction: column;",
+                "cols": 1,
+                "fields": [
+                    {"Extensions":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ExtensionID": "extension_values.ExtensionID"}
+                        ],
+                        "masterschema": "extensions",
+                        "keyfield": "ExtensionID",
+                        "targetkeyfield": "ExtensionID",
+                        "tablename": "extension_values",
+                        "maintable": "parts",
+                        "maintablekeyfield": "ID",
+                        "schema":"extension_values",
+                        "lng":{
+                            "code": "Extensions",
+                            "default":"Extensions"
+                        },
+                        "actions": ["Add", "Delete"]  
+                    }},
+                    {"GroupItems":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "orders.GroupOrderID"}
+                        ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "ID",
+                        "tablename": "orders",
+                        "tablekeyfield": "ID",
+                        "schema":"orders",                        
+                        "lng":{
+                            "code": "GroupOrders",
+                            "default":"Group Orders"
+                        }  ,
+                        "actions": ["Add", "Delete"]                     
+                    }},
+                    {"Children":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "orders.ParentOrderID"}
+                        ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "ID",
+                        "tablename": "orders",
+                        "tablekeyfield": "ID",
+                        "schema":"orders",                        
+                        "lng":{
+                            "code": "ChildOrders",
+                            "default":"Child Orders"
+                        }  ,
+                        "actions": ["Add", "Delete"]                     
+                    }},
+                    {"Details":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "order_details.OrderID"}
+                         ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "OrderID",
+                        "tablename": "order_details",
+                        "tablekeyfield": "ID",
+                        "schema":"order_details",                        
+                        "lng":{
+                            "code": "OrderDetails",
+                            "default":"Order Details"
+                        }  ,
+                        "actions": ["Add", "Delete"]     
+                    }},
+                    {"History":{
+                        "type": "extensionlink",
+                        "linkfields": [
+                            {"ID": "order_histories.ID"}
+                         ],
+                        "keyfield": "ID",
+                        "targetkeyfield": "OrderID",
+                        "tablename": "order_histories",
+                        "tablekeyfield": "ID",
+                        "schema":"order_histories",                        
+                        "lng":{
+                            "code": "OrderHistory",
+                            "default":"Order History"
+                        }  ,
+                        "actions": ["Add", "Delete"]     
+                    }}
+                ]
+            }]
+        }
+    },    
+    "definitions": {
+        "Order":{
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "ID": {
+                    "type": "integer",
+                    "lng": {
+                        "code": "ID",
+                        "default": "ID"
+                    }
+                },
+                "OrderNo": {
+                    "type": "string",
+                    "lng": {
+                        "code": "OrderNo",
+                        "default": "Order No"
+                    }
+                },
+                "OrderType": {
+                    "type": "string",
+                    "lng": {
+                        "code": "OrderType",
+                        "default": "Order Type"
+                    }
+                },
+                "PartID": {
+                    "type": "integer",
+                    "lng": {
+                        "code": "PartNo",
+                        "default": "Part No"
+                    }
+                },
+                "OrderQuantity": {
+                    "type": "decimal",
+                    "lng": {
+                        "code": "OrderQuantity",
+                        "default": "Order Quantity"
+                    }
+                },
+                "Uom": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Uom",
+                        "default": "Uom"
+                    }
+                },
+                "Status": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "Status",
+                        "default": "Status"
+                    }
+                },
+                "ProgressStatus": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "ProgressStatus",
+                        "default": "Progress Status"
+                    }
+                },
+                "Description": {
+                    "type": "string",
+                    "lng": {
+                        "code": "Description",
+                        "default": "Description"
+                    }
+                },
+                "GroupOrderID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "GroupOrderNo",
+                        "default": "Group Order No"
+                    }
+                },
+                "ParentOrderID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "ParentOrderNo",
+                        "default": "Parent Order No"
+                    }
+                },
+                "ExternalOrderNo": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "ExternalOrderNo",
+                        "default": "External Order No"
+                    }
+                },
+                "ExternalSystem": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "ExternalSystem",
+                        "default": "External System"
+                    }
+                },
+                "Factory": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "Factory",
+                        "default": "Factory"
+                    }
+                },
+                "LineNo": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "LineNo",
+                        "default": "Line No"
+                    }
+                },
+                "Project": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "Project",
+                        "default": "Project"
+                    }
+                },
+                "TaskName": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "TaskName",
+                        "default": "Task Name"
+                    }
+                },
+                "Location": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "Location",
+                        "default": "Location"
+                    }
+                },
+                "StageLocation": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "StageLocation",
+                        "default": "Stage Location"
+                    }
+                },
+                "FGLocation": {
+                    "type": "string",
+                    "nullvalue":"",
+                    "lng": {
+                        "code": "FGLocation",
+                        "default": "FG Location"
+                    }
+                },
+                "ScheduledStartDate": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "ScheduledStartDate",
+                        "default": "Scheduled Start Date"
+                    }
+                },
+                "ScheduledCompletedDate": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "ScheduledCompletedDate",
+                        "default": "Scheduled Completed Date"
+                    }
+                },
+                "ActualStartDate": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "ActualStartDate",
+                        "default": "Actual Start Date"
+                    }
+                },
+                "ActualCompletedDate": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "ActualCompletedDate",
+                        "default": "Actual Completed Date"
+                    }
+                },
+                "DueDate": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "DueDate",
+                        "default": "Due Date"
+                    }
+                },
+                "LastStartDateTime": {
+                    "type": "string",
+                    "format": "datetime",
+                    "lng": {
+                        "code": "LastStartDateTime",
+                        "default": "Last Start Date Time"
+                    }
+                },
+                "DurationSeconds": {
+                    "type": "integer",
+                    "lng": {
+                        "code": "DurationSeconds",
+                        "default": "Duration Seconds"
+                    }
+                },
+                "ActualDurationSeconds": {
+                    "type": "integer",
+                    "lng": {
+                        "code": "ActualDuractionSeconds",
+                        "default": "Actual Duraction Seconds"
+                    }
+                },
+                "ProductionWorkFlowID":{
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "ProductionWorkFlowID",
+                        "default": "Production Work Flow"
+                    }
+                },
+                "ManageWorkFlowEntityID":{
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng": {
+                        "code": "ManageWorkFlowEntityID",
+                        "default": "Manage Work Flow Entity"
+                    }
+                },
+                "ExtensionID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng":{
+                        "code": "ExtensionID",
+                        "default":"Extension Data"
+                    } 
+                },
+                "Active": {
+                    "type": "boolean",
+                    "lng": {
+                        "code": "Active",
+                        "default": "Active"
+                    }
+                },
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            }     
+        },
+        "Part": {
+            "type": "object",
+            "additionalProperties": false,            
+            "properties": {
+                "ID": {
+                    "type": "integer",
+                    "lng":{
+                        "code": "DB_ID",
+                        "default":"ID"
+                    } 
+                },
+                "PartNo": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "PartNo",
+                        "default":"Part No"
+                    } 
+                },
+                "Revision": {
+                    "type": "string",                   
+                    "lng":{
+                        "code": "Revision",
+                        "default":"Revision"
+                    } 
+                },
+                "RevisionControl": {
+                    "type": "boolean",
+                    "lng":{
+                        "code": "RevisionControl",
+                        "default":"Revision Control"
+                    } 
+                },
+                "Description": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Description",
+                        "default":"Description"
+                    } 
+                },
+                "Class": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Class",
+                        "default":"Class"
+                    } 
+                },
+                "PartGroup": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Group",
+                        "default":"Group"
+                    } 
+                },
+                "PartFamily": {
+                    "type": "string",
+                    "lng":{
+                        "code": "Family",
+                        "default":"Family"
+                    } 
+                },
+                "TrackType": {
+                    "type": "integer",
+                    "options":{
+                        "value": [0, 1,2,3],
+                        "lngcode":["Bulk","Serialized", "SerializedWithBatch", "Batch"],
+                        "default": ["Bulk","Serialized", "SerializedWithBatch", "Batch"]
+                     } ,
+                    "lng":{
+                        "code": "TrackType",
+                        "default":"Track Type"
+                    } 
+                },
+                "StoreType": {
+                    "type": "integer",
+                    "lng":{
+                        "code": "StoreType",
+                        "default":"Store Type"
+                    } 
+                },
+                "Type": {
+                    "type": "integer",
+                    "options":{
+                        "value": [0,1,2,3,4,5,6,7],
+                        "lngcode":["Material","Built", "Mixed", "Phatom", "Kit", "SubAssembly", "Assembly", "Service"],
+                        "default": ["Material","Built", "Mixed", "Phatom", "Kit", "SubAssembly", "Assembly", "Service"]
+                     },
+                    "lng":{
+                        "code": "Type",
+                        "default":"Type"
+                    } 
+                },
+                "Uom": {
+                    "type": "string",
+                    "query": "select uom from uoms",
+                    "lng":{
+                        "code": "Uom",
+                        "default":"Uom"
+                    } 
+                },
+                "BatchSize": {
+                    "type": "decimal",
+                    "lng":{
+                        "code": "BatchSize",
+                        "default":"Batch Size"
+                    } 
+                },
+                "CodeFormat": {
+                    "type": "string",
+                    "lng":{
+                        "code": "CodeFormat",
+                        "default":"Code Format"
+                    } 
+                },
+                "ExtensionID": {
+                    "type": "integer",
+                    "nullvalue":0,
+                    "lng":{
+                        "code": "ExtensionID",
+                        "default":"Extension Data"
+                    } 
+                },
+                "Active": {
+                    "type": "boolean",
+                    "readonly": true,
+                    "lng":{
+                        "code": "Active",
+                        "default":"Active"
+                    }
+                },
+                "workspaceSchema": {
+                    "type": "string",
+                    "lng":{
+                        "code": "workspaceSchema",
+                        "default":"workspace Schema"
+                    } 
+                },                
+                "createdby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedBy",
+                        "default":"Created By"
+                    }
+                },
+                "createdon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "CreatedOn",
+                        "default":"Created On"
+                    }
+
+                },
+                "updatedby": {
+                    "type": "string",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedBy",
+                        "default":"Updated By"
+                    }
+                },
+                "updatedon": {
+                    "type": "string",
+                    "format":"datetime",
+                    "readonly": true,
+                    "lng":{
+                        "code": "UpdatedOn",
+                        "default":"Updated On"
+                    }
+
+                }
+            },
+            "required": [
+                "PartNo",
+                "WorkSpaces"
+            ],
+            "unchangable": ["id"],
+            "hidden": ["id"],
+            
+            "title": "Parts Maintenance"
+        }
+    }
+}

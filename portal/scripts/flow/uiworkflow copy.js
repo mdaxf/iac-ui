@@ -1586,26 +1586,13 @@ var WorkFlow = (function () {
 
 		}
     resize() {
-      
+    
       let width  = this.wrappercontainer.offsetWidth
       let height = this.wrappercontainer.offsetHeight
       
-      /*solve the issue that load in iframe */
-      if(width == 0 || height == 0){
-        width = this.wrappercontainer.clientWidth;
-        height = this.wrappercontainer.clientHeight;
-      }
-
-      if(width == 0 || height == 0){
-        this.wrappercontainer.style.width = $('#' + this.wrapper).width() + 'px';
-        this.wrappercontainer.style.height = $('#' + this.wrapper).height() + 'px';
-        width = $('#' + this.wrapper).width();
-        height = $('#' + this.wrapper).height();
-      }
-
       let rect = this.Paper.viewport.getBoundingClientRect();
 
-      UI.Log('resize the paper:', $('#' + this.wrapper).width(),$('#' + this.wrapper).height() ,width, height, rect, this.options, this)
+      UI.Log('resize the paper:', $('#' + this.wrapper),width, height, rect, this.options, this)
 
       if(width > this.options.width || height > this.options.height)
         this.Paper.setDimensions(width, height);
@@ -1626,35 +1613,18 @@ var WorkFlow = (function () {
 
     setup_zoom() {
       //	UI.Log(this.wrapper,this.container,$(this.container))
-      if(this.svgZoom != null)
-        this.svgZoom.destroy();
+      this.svgZoom = svgPanZoom($(this.wrappercontainer).find('svg')[0], {
+        center: true,
+        zoomEnabled: true,
+        panEnabled: true,
+        resize: true,
+        controlIconsEnabled: true,
+        fit: true,
+        minZoom: 0.01,
+        maxZoom: 100,
+        zoomScaleSensitivity: 0.1
+      }); 
       
-      let width  = this.wrappercontainer.offsetWidth
-      let height = this.wrappercontainer.offsetHeight
-      if(width == 0 || height == 0){
-        this.wrappercontainer.style.width = $('#' + this.wrapper).width() + 'px';
-        this.wrappercontainer.style.height = $('#' + this.wrapper).height() + 'px';
-      //  width = $('#' + this.wrapper).width();
-      //  height = $('#' + this.wrapper).height();
-      }      
-
-
-      if($(this.wrappercontainer) && $(this.wrappercontainer).find('svg').length > 0){
-
-        console.log('setup_zoom', $(this.wrappercontainer).find('svg')[0], $(this.wrappercontainer).find('svg')[0].getBoundingClientRect())
-
-        this.svgZoom = svgPanZoom($(this.wrappercontainer).find('svg')[0], {
-          center: true,
-          zoomEnabled: true,
-          panEnabled: true,
-          resize: true,
-          controlIconsEnabled: true,
-          fit: true,
-          minZoom: 0.01,
-          maxZoom: 100,
-          zoomScaleSensitivity: 0.1
-        }); 
-      }
     }
 
     menu_click(data){

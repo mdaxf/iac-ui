@@ -2334,6 +2334,7 @@ function rAFThrottle(func) {
             this.Context = this.id;
             this.inputs={};
             this.outputs ={};
+            this.immediateData ={};
             this.promiseCount =0;
             this.Promiseitems = {};
             this.preloaddata();
@@ -2372,6 +2373,12 @@ function rAFThrottle(func) {
                     UI.Log(e)
                 }
             }
+
+            UI.Log("preload data",this.configuration, this.Panel.page.immediateData)
+            if(this.Panel.page.hasOwnProperty("immediateData"))
+                this.immediateData = this.Panel.page.immediateData
+            if(this.configuration.hasOwnProperty("immediateData"))
+                this.immediateData = Object.assign({},this.configuration.immediateData,this.immediateData)
 
             if(this.configuration.inputs)        
                 this.createinputs(this.configuration.inputs);
@@ -2730,16 +2737,23 @@ function rAFThrottle(func) {
             this.view.appendChild(UI.createFragment(this.createcontext(body.innerHTML)));
         }
         createinputs(inputs){
+            let that = this
             let inputscript = "";
             // UI.Log(Session.snapshoot.sessionData,inputs);
             Object.keys(inputs).reduce((acc, key) => {
-                if(Session.snapshoot.sessionData.hasOwnProperty(key)   ){
+                if(that.immediateData.hasOwnProperty(key)){
+                    inputs[key] = that.immediateData[key]
+                }else if(Session.snapshoot.sessionData.hasOwnProperty(key)   ){
                     inputs[key] = Session.snapshoot.sessionData[key];                      
                 }
+                
             }, {})
 
             this.inputs = inputs;
-            // UI.Log(inputs)
+            
+            // apply the immediateData to inputs
+            
+
             return inputscript;
         }
         createoutputs(outputs){
@@ -3263,10 +3277,38 @@ function rAFThrottle(func) {
             this.refresh = false;
             Session.views = {};
             Session.panels = {};
+            this.headerless = false;
 
+            if(configuration.headerless){
+                this.headerless = configuration.headerless;
+            }
+
+            this.immediateData = {};
+            this.immediateData = Object.assign({},this.immediateData,configuration.immediateData);
+
+            if(!configuration.rootelemnent || configuration.rootelemnent == ""){
+                this.root = document.body;
+            }else if(configuration.rootelemnent){          
+                
+                if(typeof configuration.rootelemnent == "object")
+                    this.root = configuration.rootelemnent;
+                else if(typeof configuration.rootelemnent == "string")
+                    this.root = document.getElementByClassName(configuration.rootelemnent);
+                
+                if(!this.root && typeof configuration.rootelemnent == "string")
+                    this.root = document.getElementById(configuration.rootelemnent);
+
+                if(!this.root)
+                    this.root = document.body;
+                
+                this.root = configuration.rootelemnent;
+            }
+            
+            //const elements = this.root.querySelector('.ui-page');
             const elements = document.getElementsByClassName('ui-page');
-            for (let i = 0; i < elements.length; i++) {
-                elements[i].remove();
+            if(elements)
+                for (let i = 0; i < elements.length; i++) {
+                    elements[i].remove();
             }
         //    UI.tokencheck();
             if(configuration !="" && pageID != null && pageID != undefined){
@@ -3455,10 +3497,11 @@ function rAFThrottle(func) {
             // UI.Log(this.configuration)
             let id = this.id;
             let page =null;
-            let pagediv = document.getElementsByClassName("iac-ui-page-header");
+            let pagediv = document.getElementsByClassName("ui-page");
             let width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
             let height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-            if(pagediv.length == 0 ){
+            UI.Log("page size:", width, height)
+            if(pagediv.length == 0){
                 let pageid = 'page_'+UI.generateUUID();
                 page = document.createElement("div");
                 page.className = "ui-page";                
@@ -3475,7 +3518,8 @@ function rAFThrottle(func) {
                 page.style.alignItems = "flex-start";
                 page.style.flexDirection = "column";
                 page.id = pageid;
-                document.body.appendChild(page);
+                
+                this.root.appendChild(page);
             }
             else
                 page = pagediv[0];
@@ -3546,7 +3590,8 @@ function rAFThrottle(func) {
                 Session.pushToStack(stackitem);                                
             }
             
-            this.pageheader = new Pageheader(page)
+            if(!this.headerless)
+                this.pageheader = new Pageheader(page)
 
             this.setevents();
 

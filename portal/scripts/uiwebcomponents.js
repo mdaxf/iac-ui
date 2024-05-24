@@ -1,4 +1,104 @@
-// Line Chart Web Component
+if (!window.customElements.get('ui-view')){
+    customElements.define('ui-view',  class extends HTMLElement {
+    constructor() {
+        super();
+        this.shadow = this.attachShadow({mode:'open'});      
+    /*    let script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('src', 'scripts/jquery.min.js');  
+        this.shadow.appendChild(script);
+        script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('src', 'scripts/uiform.js');
+        this.shadow.appendChild(script);
+        script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('src', 'scripts/uiframework.js');
+        this.shadow.appendChild(script);
+        script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.setAttribute('src', 'scripts/jsonmanager.js');
+        this.shadow.appendChild(script); */
+    }
+    connectedCallback() {
+        this.view = this.getAttribute("viewname")
+        this.parameters = this.getAttribute("parameters")
+
+        const UITabulatorLoadedEvent = new CustomEvent('uiview_component_loaded');
+
+        this.dispatchEvent(UITabulatorLoadedEvent);
+        UI.Log("UI View", this.view, this.parameters)
+
+        this.loadview();
+    }
+    static get observedAttributes() {
+        return ['parameters'];
+    }
+    loadview(){
+        let view = {
+            name: this.view,
+            type:"document",
+            immediateData: JSON.parse(this.parameters)
+        }
+        let pagecfg = {
+            "panels": [
+                {
+                    "name": "main",
+                    "view": view
+                }
+            ],
+            "immediateData": JSON.parse(this.parameters),
+            "headerless": true
+        }        
+        
+        let iframe = document.createElement("iframe");  
+        let src = '/portal/uipage.html?cfg='+JSON.stringify(pagecfg);
+        iframe.src = src;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "none";
+        this.shadow.appendChild(iframe);
+    }
+})
+}
+if (!window.customElements.get('ui-page')){
+customElements.define('ui-page',  class extends HTMLElement {
+    constructor() {
+        super();
+        this.shadow = this.attachShadow({mode:'open'});
+    }
+    connectedCallback() {
+        this.page = this.getAttribute("pagename")
+        this.parameters = this.getAttribute("parameters")
+        
+        const UIPageLoadedEvent = new CustomEvent('uipage_component_loaded');
+
+        this.dispatchEvent(UIPageLoadedEvent);
+        UI.Log("UI Page", this.page, this.parameters)
+
+        this.loadpage();
+    }
+    static get observedAttributes() {
+        return ['parameters'];
+    }
+    loadpage(){
+        let pagecfg ={
+            name: this.page,
+            immediateData: JSON.parse(this.parameters)
+        }
+        let iframe = document.createElement("iframe");  
+        let src = "/portal/uipage.html?headerless=true&page="+this.page+"&parameters="+this.parameters;
+        iframe.src = src;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.border = "none";
+        this.shadow.appendChild(iframe);
+    }
+})
+}
+
+// ui table Web Component
+if (!window.customElements.get('ui-tabulator')){
 customElements.define('ui-tabulator', class extends HTMLElement {
     constructor() {
         super();
@@ -22,6 +122,7 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         this.data_url = this.getAttribute("data_url");
         this.data_method = this.getAttribute("data_method");
         this.condition = this.getAttribute("condition");
+        this.query = this.getAttribute("query");
 
 
         if(!this.condition || this.condition == null || this.condition == undefined)
@@ -45,6 +146,8 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         
         if(this.schema != null && this.schema != "")
             this.loaddatabyschema();
+        else if(this.query != null && this.query != "")
+            this.loaddatabyQuery(this.query);
         else
             this.createemptytable();
 
@@ -545,10 +648,11 @@ customElements.define('ui-tabulator', class extends HTMLElement {
         }
     }
 });
-
+}
 /*
  a web component to display a block chart for the machine states
 */
+if (!window.customElements.get('ui-machine-state-chart')){
 customElements.define('ui-machine-state-chart', class extends HTMLElement {
     constructor() {
         super();
@@ -709,3 +813,4 @@ customElements.define('ui-machine-state-chart', class extends HTMLElement {
 
 
 });
+}

@@ -1120,6 +1120,7 @@ var ProcessFlow = (function(){
 		}
 
 		set_events(){
+			
 			if(!this.node)
 				return;
 			let that = this;
@@ -1132,7 +1133,6 @@ var ProcessFlow = (function(){
 					y: newPosition.y
 				}
 				that.updateposition(data);
-				/*that.update(data,'') */
 			}); 			
 		}
 		remove_events(){
@@ -1322,6 +1322,7 @@ var ProcessFlow = (function(){
 		}
 
 		delete(){
+			this.remove_events();
 			let that = this;
 			if(this.node){
 				this.node.shape.remove();
@@ -1448,6 +1449,7 @@ var ProcessFlow = (function(){
 			}
 		}
 		delete(){
+			this.remove_events();
 			let that = this;
 			if(this.node){
 				this.node.shape.remove();
@@ -2862,6 +2864,13 @@ var ProcessFlow = (function(){
 		}
 		
 		render(){
+			if(!this.blocks)
+				this.blocks = [];
+
+			for(var i=0;i<this.blocks.length;i++){
+				this.blocks[i].remove_events();
+			};  
+
 			this.initialize_layout();
 
 			this.Graph.clear();
@@ -2904,7 +2913,12 @@ var ProcessFlow = (function(){
 		
 		
 		refresh(){
-			
+			if(!this.blocks)
+				this.blocks = [];
+
+			for(var i=0;i<this.blocks.length;i++){
+				this.blocks[i].remove_events();
+			};  
 			this.Graph.clear();
 			
 			this.make_blocks();
@@ -3017,6 +3031,13 @@ var ProcessFlow = (function(){
 		//	$.contextMenu('destroy');
 		}
 		destry(){
+			if(!this.blocks)
+				this.blocks = [];
+
+			for(var i=0;i<this.blocks.length;i++){
+				this.blocks[i].remove_events();
+			}; 
+
 			this.Graph.clear();
 			window.removeEventListener('resize', this.windows_resize,false);
 			this.blocks = [];

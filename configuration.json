@@ -33,7 +33,7 @@
     },
     "webserver":{
         "port": 8001,
-        "timeout": 30,
+        "timeout": 90,
         "paths":{
             "portal": {                
                 "path":"portal",

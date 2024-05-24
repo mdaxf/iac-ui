@@ -152,12 +152,12 @@ var portsOut = {
 
 // Task template
 joint.shapes.workflow.Task = joint.shapes.basic.Rect.extend({
-  markup: '<g class="rotatable"><g ><rect/></g><text/></g>',
+  markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>',
   defaults: joint.util.deepSupplement({
     type: 'workflow.Task',
     size: { width: 100, height: 50 },
     attrs: {
-      'rect': { fill: '#F8F8F8', stroke: 'black', 'stroke-width': 2 , rx: 5, ry: 5 , width: 100, height: 50},
+      'rect': { fill: '#F8F8F8', stroke: 'black', 'stroke-width': 2 },
       'text': { text: 'Task', 'ref-x': 0.5, 'ref-y': 0.5, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 }
     }
   }, joint.shapes.basic.Rect.prototype.defaults),
@@ -171,12 +171,12 @@ joint.shapes.workflow.Task = joint.shapes.basic.Rect.extend({
 
 // Event template
 joint.shapes.workflow.Event = joint.shapes.basic.Circle.extend({
-  markup: '<g class="rotatable"><g ><circle/></g><text/></g>',
+  markup: '<g class="rotatable"><g class="scalable"><circle/></g><text/></g>',
   defaults: joint.util.deepSupplement({
     type: 'workflow.Event',
     size: { width: 50, height: 50 },
     attrs: {
-      'circle': { fill: '#F8F8F8', stroke: 'black', 'stroke-width': 2, r: 25},
+      'circle': { fill: '#F8F8F8', stroke: 'black', 'stroke-width': 2 },
       'text': { text: 'Event', 'ref-x': 0.5, 'ref-y': 0.5, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 },
       
     }
@@ -192,12 +192,12 @@ joint.shapes.workflow.Event = joint.shapes.basic.Circle.extend({
 
 // Gateway template
 joint.shapes.workflow.Gateway = joint.shapes.basic.Path.extend({
-  markup: '<g class="rotatable"><g ><path/></g><text/></g>',
+  markup: '<g class="rotatable"><g class="scalable"><path/></g><text/></g>',
   defaults: joint.util.deepSupplement({
     type: 'workflow.Gateway',
     size: { width: 100, height: 50 },
     attrs: {
-      'path': { d: 'M 30 0 L 60 30 L 30 60 L 0 30 Z', fill: '##FCF3CF', stroke: 'black', 'stroke-width': 2, width: 100, height: 50},
+      'path': { d: 'M 30 0 L 60 30 L 30 60 L 0 30 Z', fill: '##FCF3CF', stroke: 'black', 'stroke-width': 2 },
       'text': { text: 'Routing', 'ref-x': 0.5, 'ref-y': -1, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 }
     }
   }, joint.shapes.basic.Path.prototype.defaults),
@@ -210,12 +210,12 @@ joint.shapes.workflow.Gateway = joint.shapes.basic.Path.extend({
 });
 
 joint.shapes.workflow.Note = joint.dia.Element.define('workflow.Note', {
-  markup: '<g class="rotatable"><g ><rect/></g><text/></g>',
+  markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>',
   defaults: joint.util.deepSupplement({
     type: 'workflow.Note',
     size: { width: 200, height: 100 },
     attrs: {
-      'rect': { fill: '#FFFFCC', stroke: 'black', 'stroke-width': 0 , rx: 5, ry: 5 , width: 200, height: 100},
+      'rect': { fill: '#FFFFCC', stroke: 'black', 'stroke-width': 0 },
       'text': { text: 'Note', 'ref-x': 0.5, 'ref-y': 0.5, 'y-alignment': 'middle', 'x-alignment': 'middle', fill: 'black', 'font-size': 14 }
     }
   }, joint.dia.Element.prototype.defaults),
@@ -396,11 +396,6 @@ var WorkFlow = (function () {
       UI.Log(data,data.id)
       if(!data.id)
         data.id = UIWorkFlow.generateUUID();
-
-      if(data.width == undefined || data.width == null)
-        data.width = 100;
-      if(data.height == undefined || data.height == null)
-        data.height = 50;
 
     //  UI.Log(data,data.id)
       this.id = data.id ;
@@ -858,7 +853,17 @@ var WorkFlow = (function () {
 
       this.FlowJsonObj = new UI.JSONManager(this.flowobj, { allowChanges: this.flowobjchange })
 
-      this.wrapper = wrapper;
+      if(typeof wrapper == 'string') 
+        this.wrapper = document.getElementById(wrapper);
+      else
+        this.wrapper = wrapper;
+
+      this.wrapperid = this.wrapper.getAttribute('id');
+
+      if(this.wrapperid == null || this.wrapperid == undefined || this.wrapperid == ""){
+        this.wrapperid = UIWorkFlow.safeID(UIWorkFlow.generateUUID());
+        this.wrapper.setAttribute('id', this.wrapperid);
+      }
       this.options = options;
       this.init(wrapper, options);
     }
@@ -892,8 +897,8 @@ var WorkFlow = (function () {
       const default_options = {
         gridsize: 10,
         drawgrid: true,
-        width: 1000,
-        height: 800,
+        width: 1400,
+        height: 1000,
         backgroundcolor: 'white',
         interactive: true,
         nodewidth: 200,
@@ -919,69 +924,73 @@ var WorkFlow = (function () {
       this.options = Object.assign({}, default_options, options);
     }
     setup_wrapper(wrapper) {
-      let section = document.getElementById(wrapper)
+
+      //let section = document.getElementById(wrapper)
+      let section = this.wrapper
       section.style.display = "flex";
       section.style.flexDirection = "row"
       section.style.flexWrap = "nowrap"
       section.style.width = "100%"
       section.style.height = "100%"
-      this.sectionwrapper = wrapper
-      this.wrapper = wrapper
-
+      this.sectionwrapper = this.wrapperid;
+    //  this.wrapper = wrapper
+      let wrapperid = this.wrapperid;
       let attrs = [{
         'class': 'processflow_container uiflow_process_flow_menubar_container',
-        'id': this.wrapper + '_flow_menu_panel'
+        'id': wrapperid + '_flow_menu_panel'
       },
       {
         'class': 'processflow_container',
-        'id': this.wrapper + "_flow_container",
+        'id': wrapperid + "_flow_container",
         'style': 'width:100%;height:100%;display:flex'
       },
       {
         'class': 'processflow_container',
-        'id': this.wrapper + '_flow_property_panel',
+        'id': wrapperid+ '_flow_property_panel',
         'style': 'width:0px;float:right;position:absolute;top:45px;right:0px;background-color:lightgrey;overflow:auto;' +
           'border-left:2px solid #ccc;resize:horizontal;z-index:9'
       },
       {
         'class': 'processflow_items_panel',
-        'id': this.wrapper + '_flow_items_panel',
+        'id': wrapperid + '_flow_items_panel',
         'style': 'width:0px;height:100%;float:left;position:absolute;top:50px;left:0px;background-color:lightgrey;overflow:auto;' +
           'border-left:2px solid #ccc;resize:horizontal;z-index:9'
       }]
       new UI.Builder(section, attrs)
-      this.menu_panel = document.getElementById(this.wrapper + '_flow_menu_panel')
-      this.wrappercontainer = document.getElementById(this.wrapper + "_flow_container")
-      this.property_panel = document.getElementById(this.wrapper + '_flow_property_panel')
-      this.item_panel = document.getElementById(this.wrapper + '_flow_items_panel')
+    /*  this.menu_panel = document.getElementById(wrapperid + '_flow_menu_panel')
+      this.wrappercontainer = document.getElementById(wrapperid+ "_flow_container")
+      this.property_panel = document.getElementById(wrapperid + '_flow_property_panel')
+      this.item_panel = document.getElementById(wrapperid + '_flow_items_panel') */
+      this.menu_panel = this.wrapper.querySelector('#'+wrapperid + '_flow_menu_panel')
+      this.wrappercontainer = this.wrapper.querySelector('#'+wrapperid+ "_flow_container")
+      this.property_panel = this.wrapper.querySelector('#'+wrapperid + '_flow_property_panel')
+      this.item_panel = this.wrapper.querySelector('#'+wrapperid + '_flow_items_panel')
       this.resizeTool = $('<div class="ui_flow_element_resize-tool"></div>').appendTo('body').hide();
       // Create text input
       this.textInput = $('<input class="ui_flow_element_text-input" type="text">').appendTo('body').hide();
 
-      UI.Log(this.menu_panel, this.wrappercontainer, this.property_panel, this.item_panel, this)
     }
 
     setup_flow() {
       let that = this;
-      
-      if ($('#' + this.wrapper ).width() > 800)
-        this.options.width = $('#' + this.wrapper).width();
-      if ($('#' + this.wrapper).height() > 600)
-        this.options.height = $('#' + this.wrapper).height();
+      if ($(this.wrapper).width() > 800)
+        this.options.width = $(this.wrapper).width();
+      if ($(this.wrapper).height() > 600)
+        this.options.height = $(this.wrapper).height();
 
       this.setup_workflow_paper();
       this.setup_workflow_graph();
       /*    this.setup_workflow_toolbar();
           this.setup_workflow_property();
           this.setup_workflow_items();  */
-
+      UI.Log(this.flowobj,this)
       this.render();
     }
 
     setup_workflow_paper() {
       let that = this;
       this.Graph = new joint.dia.Graph;
-      UI.Log(this.wrappercontainer, this.options, this.Graph)
+
       this.Paper = new joint.dia.Paper({
         el: this.wrappercontainer, // document.getElementById(wrapper),
         model: this.Graph,
@@ -1042,7 +1051,6 @@ var WorkFlow = (function () {
         }
       });
 
-      this.Paper.setOrigin(0, 0);
       //	this.Paper.options.highlighting.magnetAvailability = magnetAvailabilityHighlighter;
     }
     setup_workflow_graph() {
@@ -1059,11 +1067,6 @@ var WorkFlow = (function () {
         this.flowobj.nodes.forEach(function (node) {
           if (!node.id)
             node.id = UIWorkFlow.generateUUID();
-
-          if(node.width == undefined || node.width == null)
-            node.width = 100;
-          if(node.height == undefined || node.height == null)
-            node.height = 50;
           that.nodes.push(node);
         });
       }
@@ -1154,7 +1157,7 @@ var WorkFlow = (function () {
 
       this.make_blocks();
       this.make_links();
-      
+
       if(this.options.interactive){
         this.make_Menubar();
       }else
@@ -1168,7 +1171,7 @@ var WorkFlow = (function () {
         this.setup_contextmenu()
       }
 
-      this.trigger_event('flow_ready',[]) 
+      this.trigger_event('flow_ready',[])
     }
 
     /**
@@ -1180,7 +1183,6 @@ var WorkFlow = (function () {
     }
     destry() {
       window.onresize = null;
-      this.svgZoom.destroy();
       this.Graph.clear();
       this.Graph.off();
       this.Paper.off();
@@ -1360,7 +1362,7 @@ var WorkFlow = (function () {
       that.floweditselecteditem =null;
       that.elementresizing = false;
       that.resizeTool.hide();
-      $('.UIWorkFlow_process_flow_menubar_container_menubar').removeClass('selected');
+      $(this.wrapper).find('.UIWorkFlow_process_flow_menubar_container_menubar').removeClass('selected');
     }
 
     setup_paperevents() {
@@ -1586,75 +1588,34 @@ var WorkFlow = (function () {
 
 		}
     resize() {
-      
-      let width  = this.wrappercontainer.offsetWidth
-      let height = this.wrappercontainer.offsetHeight
-      
-      /*solve the issue that load in iframe */
-      if(width == 0 || height == 0){
-        width = this.wrappercontainer.clientWidth;
-        height = this.wrappercontainer.clientHeight;
-      }
-
-      if(width == 0 || height == 0){
-        this.wrappercontainer.style.width = $('#' + this.wrapper).width() + 'px';
-        this.wrappercontainer.style.height = $('#' + this.wrapper).height() + 'px';
-        width = $('#' + this.wrapper).width();
-        height = $('#' + this.wrapper).height();
-      }
 
       let rect = this.Paper.viewport.getBoundingClientRect();
 
-      UI.Log('resize the paper:', $('#' + this.wrapper).width(),$('#' + this.wrapper).height() ,width, height, rect, this.options, this)
+      //	UI.Log(rect, this.options)
 
-      if(width > this.options.width || height > this.options.height)
-        this.Paper.setDimensions(width, height);
-    //  this.Paper.setOrigin(0, 0);
-      this.Paper.scaleContentToFit({ padding: 20 });
-      /*
       if (rect.width > this.options.width)
         this.Paper.scaleContentToFit({ padding: 20 });
 
 
       rect = this.Paper.viewport.getBoundingClientRect();
 
-      if (rect.height > this.options,height) */
-        $('#' + this.wrapper).css('overflow', 'auto') 
-      
-
+      if (rect.height > this.options.width)
+       $(this.wrapper).css('overflow-y', 'auto')
     }
 
     setup_zoom() {
       //	UI.Log(this.wrapper,this.container,$(this.container))
-      if(this.svgZoom != null)
-        this.svgZoom.destroy();
-      
-      let width  = this.wrappercontainer.offsetWidth
-      let height = this.wrappercontainer.offsetHeight
-      if(width == 0 || height == 0){
-        this.wrappercontainer.style.width = $('#' + this.wrapper).width() + 'px';
-        this.wrappercontainer.style.height = $('#' + this.wrapper).height() + 'px';
-      //  width = $('#' + this.wrapper).width();
-      //  height = $('#' + this.wrapper).height();
-      }      
+      this.svgZoom = svgPanZoom($(this.wrappercontainer).find('svg')[0], {
+        center: true,
+        zoomEnabled: true,
+        panEnabled: true,
+        controlIconsEnabled: true,
+        fit: false,
+        minZoom: 0.05,
+        maxZoom: 50,
+        zoomScaleSensitivity: 0.1
+      });
 
-
-      if($(this.wrappercontainer) && $(this.wrappercontainer).find('svg').length > 0){
-
-        console.log('setup_zoom', $(this.wrappercontainer).find('svg')[0], $(this.wrappercontainer).find('svg')[0].getBoundingClientRect())
-
-        this.svgZoom = svgPanZoom($(this.wrappercontainer).find('svg')[0], {
-          center: true,
-          zoomEnabled: true,
-          panEnabled: true,
-          resize: true,
-          controlIconsEnabled: true,
-          fit: true,
-          minZoom: 0.01,
-          maxZoom: 100,
-          zoomScaleSensitivity: 0.1
-        }); 
-      }
     }
 
     menu_click(data){
@@ -2070,7 +2031,7 @@ var WorkFlow = (function () {
       let content = document.getElementById(this.wrapper + '_flow_property_panel_content');*/
       let attrs={
         'class': 'processflow_container',
-        'id': this.wrapper + '_flow_property_panel_content',
+        'id': this.wrapperid + '_flow_property_panel_content',
         'style': 'width:100%;height:100%;background-color:lightgrey;overflow:auto;border-left:2px solid #ccc;resize:horizontal;z-index:9; padding:5px'
       }
 
@@ -2222,7 +2183,7 @@ var WorkFlow = (function () {
       */
       let attrs={
         'class': 'processflow_container',
-        'id': this.wrapper + '_flow_property_panel_content',
+        'id': this.wrapperid + '_flow_property_panel_content',
         'style': 'width:100%;height:100%;background-color:lightgrey;overflow:auto;border-left:2px solid #ccc;resize:horizontal;z-index:9; padding:5px'
       }
 
@@ -2649,7 +2610,6 @@ var WorkFlow = (function () {
       return tokenContainer;
     }
     getblocktargets(block){
-      let that = this;
       let targets = [];
       let targetnames = [];      
       
