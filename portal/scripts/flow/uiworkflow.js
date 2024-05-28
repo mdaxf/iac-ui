@@ -927,7 +927,13 @@ var WorkFlow = (function () {
       section.style.height = "100%"
       this.sectionwrapper = wrapper
       this.wrapper = wrapper
-
+      let width = section.offsetWidth;
+      let height = section.offsetHeight;
+      if (width == 0)
+        width = 800;
+      if (height == 0)
+        height = 600;
+      console.log("wokflow section:",width, height)
       let attrs = [{
         'class': 'processflow_container uiflow_process_flow_menubar_container',
         'id': this.wrapper + '_flow_menu_panel'
@@ -935,7 +941,7 @@ var WorkFlow = (function () {
       {
         'class': 'processflow_container',
         'id': this.wrapper + "_flow_container",
-        'style': 'width:100%;height:100%;display:flex'
+        'style': 'width:'+ width+'px;height:'+height+'px;display:flex'
       },
       {
         'class': 'processflow_container',

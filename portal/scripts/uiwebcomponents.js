@@ -84,15 +84,30 @@ customElements.define('ui-page',  class extends HTMLElement {
     loadpage(){
         let pagecfg ={
             name: this.page,
-            immediateData: JSON.parse(this.parameters)
+            immediateData: JSON.parse(this.parameters),
+            headerless: true
         }
         let iframe = document.createElement("iframe");  
-        let src = "/portal/uipage.html?headerless=true&page="+this.page+"&parameters="+this.parameters;
+       // let src = "/portal/uipage.html?headerless=true&page="+this.page+"&parameters="+this.parameters;
+        let src = "/portal/uipage.html?mode=debug";
         iframe.src = src;
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         iframe.style.border = "none";
-        this.shadow.appendChild(iframe);
+        let data = {
+            "cfg": pagecfg,
+            "inputs":{}
+        }
+        let message = {
+            "type": "pageconfiguration",
+            "data": data
+        }
+        iframe.onload = function(){
+            console.log(iframe.contentWindow,iframe.width, iframe.height)
+            iframe.contentWindow.postMessage(message, "*");
+        }
+        this.shadow.appendChild(iframe);       
+
     }
 })
 }
