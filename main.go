@@ -217,8 +217,28 @@ func main() {
 			panic("There is no configuration of webserver!")
 		}
 
+		timeout, ok := gconfig.WebServerConfig["timeout"].(time.Duration)
+		if !ok {
+			timeout = 60
+		}
+
 		// Start the web server
-		r.Run(fmt.Sprintf(":%d", port))
+		//r.Run(fmt.Sprintf(":%d", port))
+		address := fmt.Sprintf(":%d", port)
+		server := &http.Server{
+			Addr:         address,
+			Handler:      r,
+			ReadTimeout:  timeout * time.Second,
+			WriteTimeout: 2 * timeout * time.Second,
+			IdleTimeout:  3 * timeout * time.Second,
+		}
+
+		go func() {
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				ilog.Error(fmt.Sprintf("Failed to start application server: %v", err))
+				panic(err)
+			}
+		}()
 
 	}()
 	wg.Add(1)

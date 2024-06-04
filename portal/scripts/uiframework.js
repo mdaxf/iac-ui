@@ -233,6 +233,7 @@ var UI;
         UI.CONTROLLER_URL = "";
         class Ajax {
             constructor(token) {
+              this.timeout = 1000*60*60;
               this.token = token;
               if(!token || token == ''){
                 let sessionkey= window.location.origin+"_"+ "user";
@@ -245,10 +246,12 @@ var UI;
             }
           
             initializeRequest(method, url, stream) {
+              let that = this
               return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open(method, `${url}`, true);
-                
+                xhr.timeout = that.timeout;
+
                 if(this.token && this.token !='')
                     xhr.setRequestHeader('Authorization', `Bearer ${this.token}`);
 
@@ -273,10 +276,11 @@ var UI;
             }
 
             get(url, data, stream= false) {
+                let that = this;
                 return new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
                     xhr.open('GET', `${url}`, true);                
-                
+                    xhr.timeout = that.timeout;
                     if(this.token && this.token !='')
                         xhr.setRequestHeader('Authorization', `Bearer ${this.token}`);
 
@@ -296,15 +300,19 @@ var UI;
                   });
             }
           
-            post(url, data) {
+            post(url, data, stream= false) {
+              let that = this;
               return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', `${url}`, true);
-            
+                xhr.timeout = that.timeout;
                 if(this.token && this.token !='')
                     xhr.setRequestHeader('Authorization', `Bearer ${this.token}`);
 
                 xhr.setRequestHeader('Content-Type', 'application/json');
+                if (stream) {
+                    xhr.responseType = 'stream';
+                }
                 xhr.onload = () => {
                   if (xhr.status >= 200 && xhr.status < 300) {
                     resolve(xhr.response);
@@ -348,9 +356,9 @@ var UI;
             });
         }
 
-        function Post(url, data, success, fail){
+        function Post(url, data, success, fail, stream= false){
             UI.ajax = new Ajax(""); 
-            return UI.ajax.post(url, data).then((response) => {
+            return UI.ajax.post(url, data, stream).then((response) => {
                 if(success)
                     success(response);
             }).catch((error) => {
